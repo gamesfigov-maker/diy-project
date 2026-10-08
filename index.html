@@ -7,7 +7,6 @@
 <title>DIY-Project — набор для сборки Bruce на ESP32-S3</title>
 <meta name="description" content="DIY-Project: набор для сборки устройства на ESP32-S3 с прошивкой под экран 1,14 дюйма. CC1101, NRF24, PN532, ИК, SD, кнопки, плата для пайки 60×80 мм.">
 
-<!-- FAVICON -->
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -394,14 +393,10 @@ img{max-width:100%;display:block}
 @media(max-width:900px){.hero-grid{grid-template-columns:minmax(0,1fr)}.nav a.link{display:none}.burger{display:grid}.cta-bar{display:block}}
 @media(max-width:640px){body{font-size:16px}.hero-stats{gap:8px;margin-top:36px}.section-num{display:none}.components-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}.avito-card{grid-template-columns:minmax(0,1fr)}.avito-card .btn{width:100%}.hero-actions .btn{flex:1;justify-content:center}.guide-grid{grid-template-columns:1fr}.avito-qr-block{flex-direction:column;align-items:flex-start}}
 
-/* ============================================================
-   МОБИЛЬНЫЕ ОПТИМИЗАЦИИ — грузится быстрее в 3-5 раз
-   ============================================================ */
 @media (max-width: 1024px) {
   body::before { display: none; }
   .noise { display: none; }
 }
-
 @media (max-width: 768px) {
   .hero-art::before { display: none; }
   .avito-card::before,
@@ -427,7 +422,6 @@ img{max-width:100%;display:block}
   .avito-card { padding: 20px; }
   .avito-card .btn { width: 100%; }
 }
-
 @media (max-width: 400px) {
   .ticker { display: none; }
   .section-num { display: none; }
@@ -436,7 +430,6 @@ img{max-width:100%;display:block}
   .hero-tile { display: none; }
   .hero-center { width: 70%; }
 }
-
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after {
@@ -482,11 +475,31 @@ img{max-width:100%;display:block}
   </div>
 </div>
 <script>
-try {
-  if (sessionStorage.getItem('diy_entered') === '1') {
-    var g=document.getElementById('gate'); if(g){g.classList.add('is-hidden');g.setAttribute('hidden','');}
-  } else { document.body.style.overflow = 'hidden'; }
-} catch (e) { document.body.style.overflow = 'hidden'; }
+(function(){
+  try {
+    var g = document.getElementById('gate');
+    if (!g) return;
+    if (sessionStorage.getItem('diy_entered') === '1') {
+      g.classList.add('is-hidden');
+      g.setAttribute('hidden','');
+    } else {
+      document.body.style.overflow = 'hidden';
+    }
+    var start = document.getElementById('gate-start');
+    if (start) {
+      start.addEventListener('click', function(){
+        try { sessionStorage.setItem('diy_entered','1'); } catch(e){}
+        document.body.style.overflow = '';
+        g.classList.add('is-hidden');
+        setTimeout(function(){ g.setAttribute('hidden',''); }, 650);
+      });
+    }
+  } catch(e) {
+    document.body.style.overflow = '';
+    var g = document.getElementById('gate');
+    if (g) g.style.display = 'none';
+  }
+})();
 </script>
 
 <header class="bar" id="bar">
@@ -977,25 +990,25 @@ try {
 
   var IMG = {
     esp32:     ['img/ESP32-S3.webp'],
-    cc1101:    ['img/cc1101.png'],
-    display:   ['img/Дисплей 1,14.png'],
-    caps:      ['img/Конденсатор 100 мкФ.png'],
+    cc1101:    ['img/cc1101.webp'],
+    display:   ['img/Дисплей 1,14.webp'],
+    caps:      ['img/Конденсатор 100 мкФ.webp'],
     nrf24:     ['img/NRF24.png'],
-    pn532:     ['img/PN532 NFC.png'],
+    pn532:     ['img/PN532 NFC.webp'],
     sd:        ['img/Модуль SD.png'],
     headers:   ['img/Гребёнки 40 pin.png'],
-    wires:     ['img/Провода.png'],
+    wires:     ['img/Провода.webp'],
     perfboard: ['img/Плата для пайки.jpg'],
-    ir:        ['img/ИК-приёмник + передатчик.png'],
+    ir:        ['img/ИК-приёмник + передатчик.webp'],
     buttons:   ['img/Кнопки + колпачки.webp']
   };
 
   var HERO_IMAGES = {
-    'code':    ['img/hero-code.jpg', 'img/hero-code-2.jpg'],
-    'parts':   ['img/ESP32-S3.webp', 'img/cc1101.png', 'img/NRF24.png'],
+    'code':    ['img/hero-code.jpg', 'img/hero-code-2.png'],
+    'parts':   ['img/ESP32-S3.webp', 'img/cc1101.webp', 'img/NRF24.png'],
     'solder':  ['img/hero-solder.webp', 'img/Плата для пайки.jpg'],
-    'menu':    ['img/hero-menu.bmp', 'img/Дисплей 1,14.png'],
-    'modules': ['img/PN532 NFC.png', 'img/ИК-приёмник + передатчик.png'],
+    'menu':    ['img/hero-menu.webp', 'img/Дисплей 1,14.webp'],
+    'modules': ['img/PN532 NFC.webp', 'img/ИК-приёмник + передатчик.webp'],
     'final':   []
   };
 
@@ -1032,7 +1045,6 @@ try {
     });
   })();
 
-  /* HERO ГАЛЕРЕЯ — на мобиле одна картинка без автопереключения */
   (function heroGallery() {
     Array.prototype.forEach.call(document.querySelectorAll('.hero-tile[data-hero]'), function (tile, idx) {
       var key = tile.getAttribute('data-hero');
@@ -1074,7 +1086,6 @@ try {
       }
       probeNext();
 
-      /* Автопереключение ТОЛЬКО на ПК */
       if (list.length > 1 && !reduce && !isMobile) {
         var current = 0;
         window.setInterval(function () {
@@ -1116,23 +1127,8 @@ try {
     tryNext();
   }
 
-  (function gate() {
-    var gateEl = $('gate'); if (!gateEl) return;
-    if (gateEl.classList.contains('is-hidden')) { document.body.style.overflow = ''; return; }
-    var start = $('gate-start');
-    if (start) {
-      start.addEventListener('click', function () {
-        try { sessionStorage.setItem('diy_entered','1'); } catch (e) {}
-        document.body.style.overflow = '';
-        gateEl.classList.add('is-hidden');
-        window.setTimeout(function () { gateEl.setAttribute('hidden',''); }, 650);
-      });
-      start.focus({ preventScroll: true });
-    }
-  })();
-
   (function scrollFx() {
-    if (isMobile) return; /* На мобиле прогресс-бар отключён */
+    if (isMobile) return;
     var prog = $('progress'), ticking = false;
     function update() {
       ticking = false;
