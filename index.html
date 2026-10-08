@@ -1,0 +1,1449 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07090d" id="meta-theme">
+<title>DIY-Project — набор для сборки Bruce на ESP32-S3</title>
+<meta name="description" content="DIY-Project: набор для сборки устройства на ESP32-S3 с прошивкой под экран 1,14 дюйма. CC1101, NRF24, PN532, ИК, SD, кнопки, плата для пайки 60×80 мм.">
+
+<!-- FAVICON -->
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Unbounded:wght@600;700;800&display=swap">
+<script>
+try { var t = localStorage.getItem('diy_theme') || 'dark'; document.documentElement.setAttribute('data-theme', t); }
+catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+</script>
+<style>
+:root{
+  --bg:#07090d; --bg-2:#0a0d13;
+  --surface:#10161d; --surface-2:#151d26; --surface-3:#1a2430;
+  --line:#222e3b; --line-soft:#1a232e;
+  --fg:#e9f0f6; --muted:#8a9cae; --muted-2:#5f7183;
+  --accent:#ffb347; --accent-2:#ffd27a; --accent-ink:#1b1204;
+  --ok:#4fd1a1; --avito:#00aaff; --danger:#ff7a7a;
+  --r-lg:18px; --r-md:12px; --r-sm:10px;
+  --font-display:'Unbounded',system-ui,sans-serif;
+  --font-body:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  --shadow-lift:0 22px 46px -22px rgba(255,179,71,.35);
+  --shadow-card:0 24px 48px -22px rgba(255,179,71,.45);
+  --ease:cubic-bezier(.2,.8,.3,1);
+  color-scheme:dark;
+}
+[data-theme="light"]{
+  --bg:#f5f3ee; --bg-2:#fbfaf6;
+  --surface:#ffffff; --surface-2:#f6f3ec; --surface-3:#ebe6dc;
+  --line:#d8d2c5; --line-soft:#e6e1d6;
+  --fg:#161a21; --muted:#5a6470; --muted-2:#8a94a0;
+  --accent:#c9761a; --accent-2:#e89b3a; --accent-ink:#ffffff;
+  --ok:#0f9469; --avito:#0088cc;
+  color-scheme:light;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:88px}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:17px;line-height:1.65;-webkit-text-size-adjust:100%;overflow-x:hidden;transition:background-color .3s,color .3s}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:
+  radial-gradient(900px 480px at 85% -5%,rgba(0,170,255,.07),transparent 60%),
+  radial-gradient(700px 420px at -10% 30%,rgba(255,179,71,.06),transparent 60%),
+  radial-gradient(600px 400px at 60% 105%,rgba(79,209,161,.05),transparent 60%);
+}
+[data-theme="light"] body::before{opacity:.45}
+.wrap{width:100%;max-width:1240px;margin-inline:auto;padding-inline:clamp(18px,4vw,40px)}
+a{color:var(--accent);text-underline-offset:3px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.14;margin:0;letter-spacing:-.02em}
+p{margin:0}
+::selection{background:rgba(255,179,71,.35);color:var(--fg)}
+::-webkit-scrollbar{width:10px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px;border:2px solid var(--bg)}
+img{max-width:100%;display:block}
+.noise{position:fixed;inset:0;z-index:3;pointer-events:none;opacity:.04;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");mix-blend-mode:overlay}
+[data-theme="light"] .noise{display:none}
+.progress{position:fixed;top:0;left:0;right:0;height:2px;z-index:60;background:linear-gradient(90deg,var(--accent),var(--avito),var(--ok));transform-origin:left;transform:scaleX(0);will-change:transform}
+
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 26px;font:600 15.5px/1 var(--font-body);border-radius:11px;border:1px solid var(--line);background:transparent;color:var(--fg);text-decoration:none;cursor:pointer;white-space:nowrap;transition:border-color .18s,filter .18s,background .18s,transform .18s,box-shadow .2s}
+.btn:hover{border-color:var(--muted);transform:translateY(-2px)}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));border-color:var(--accent);color:var(--accent-ink);box-shadow:0 12px 32px -14px rgba(255,179,71,.7)}
+.btn-primary:hover{filter:brightness(1.06);box-shadow:0 16px 38px -14px rgba(255,179,71,.85)}
+.btn-avito{background:linear-gradient(135deg,#00aaff,#33c2ff);border-color:#00aaff;color:#fff;box-shadow:0 12px 32px -14px rgba(0,170,255,.7)}
+.btn-avito:hover{filter:brightness(1.06)}
+.btn-ghost{background:var(--surface-2);border-color:var(--line)}
+.btn-lg{min-height:58px;padding:0 32px;font-size:16.5px}
+.btn-sm{min-height:42px;padding:0 16px;font-size:14px}
+.btn-pulse{animation:pulseRing 2.6s cubic-bezier(.2,.8,.3,1) infinite}
+@keyframes pulseRing{0%{box-shadow:0 0 0 0 rgba(0,170,255,.4)}70%{box-shadow:0 0 0 14px rgba(0,170,255,0)}100%{box-shadow:0 0 0 0 rgba(0,170,255,0)}}
+
+.theme-btn{width:42px;height:42px;padding:0;border:1px solid var(--line);border-radius:11px;background:var(--surface-2);color:var(--muted);cursor:pointer;display:grid;place-items:center;transition:border-color .2s,color .2s,transform .3s}
+.theme-btn:hover{border-color:var(--accent);color:var(--accent);transform:rotate(15deg)}
+
+.to-top{position:fixed;right:24px;bottom:24px;z-index:47;width:52px;height:52px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;display:grid;place-items:center;box-shadow:0 12px 32px rgba(0,0,0,.4);opacity:0;visibility:hidden;transform:translateY(20px);transition:all .3s var(--ease);will-change:transform,opacity}
+.to-top.is-visible{opacity:1;visibility:visible;transform:translateY(0)}
+.to-top:hover{border-color:var(--accent);color:var(--accent)}
+@media(max-width:720px){.to-top{right:16px;bottom:80px;width:46px;height:46px}}
+
+.gate{position:fixed;inset:0;z-index:100;display:grid;place-items:center;overflow:hidden;transition:opacity .6s,visibility .6s}
+.gate.is-hidden{opacity:0;visibility:hidden;pointer-events:none}
+.gate-bg{position:absolute;inset:0;background:radial-gradient(circle at 30% 30%,#1a2430,#0a0e13 70%)}
+.gate-art{position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:.85}
+.gate-art svg{width:100%;height:100%;display:block}
+.gate-wire{stroke-dasharray:5 7;animation:wireFlow 2.6s linear infinite}
+@keyframes wireFlow{to{stroke-dashoffset:-24}}
+.gate-mod{animation:gateFloat 7s ease-in-out infinite;transform-origin:center;transform-box:fill-box}
+.gm1{animation-delay:0s}.gm2{animation-delay:1.8s}.gm3{animation-delay:3.6s}.gm4{animation-delay:1s}
+@keyframes gateFloat{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-14px) rotate(1deg)}}
+.gate-veil{position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 35%,rgba(255,179,71,.13),transparent 60%),linear-gradient(180deg,rgba(7,9,13,.55),rgba(7,9,13,.95))}
+.gate-inner{position:relative;z-index:2;text-align:center;max-width:720px;padding:40px 24px;animation:gateIn .9s var(--ease) both}
+@keyframes gateIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+.gate-chip{width:96px;height:96px;margin:0 auto 24px;border-radius:24px;background:linear-gradient(135deg,rgba(255,179,71,.15),rgba(255,179,71,.03));border:1.5px solid rgba(255,179,71,.45);display:grid;place-items:center;box-shadow:0 0 60px rgba(255,179,71,.35),inset 0 1px 0 rgba(255,255,255,.08);animation:gateChipPulse 3.4s ease-in-out infinite;overflow:hidden}
+@keyframes gateChipPulse{0%,100%{box-shadow:0 0 60px rgba(255,179,71,.35),inset 0 1px 0 rgba(255,255,255,.08);transform:scale(1)}50%{box-shadow:0 0 90px rgba(255,179,71,.55);transform:scale(1.03)}}
+.gate-chip img{width:78%;height:78%;object-fit:contain;filter:drop-shadow(0 6px 14px rgba(0,0,0,.4))}
+.gate-chip .fallback{color:#ffb347;font-family:var(--font-display);font-weight:700;font-size:20px;letter-spacing:.12em}
+.gate-kicker{font-family:var(--font-mono);font-size:13px;letter-spacing:.28em;text-transform:uppercase;color:var(--accent)}
+.gate-inner h1{font-size:clamp(28px,5.6vw,54px);margin-top:20px;font-weight:800}
+.gate-lead{margin:22px auto 0;max-width:46ch;color:var(--muted);font-size:clamp(15.5px,1.6vw,18px)}
+.gate-inner .btn{margin-top:36px}
+.gate-hint{margin-top:16px;font-family:var(--font-mono);font-size:12px;color:var(--muted-2)}
+
+.bar{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px) saturate(1.4);border-bottom:1px solid var(--line-soft)}
+.bar-inner{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:70px}
+.brand{display:inline-flex;align-items:center;gap:12px;font-family:var(--font-display);font-weight:700;font-size:17px;color:var(--fg);text-decoration:none;white-space:nowrap}
+.brand-chip{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:rgba(255,179,71,.1);border:1px solid rgba(255,179,71,.3)}
+.nav{display:flex;align-items:center;gap:20px}
+.nav a.link{color:var(--muted);text-decoration:none;font-size:15px;transition:color .18s;position:relative;padding:6px 0}
+.nav a.link::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent-2));transform:scaleX(0);transform-origin:left;transition:transform .25s}
+.nav a.link:hover{color:var(--fg)}
+.nav a.link:hover::after{transform:scaleX(1)}
+.burger{display:none;width:44px;height:44px;border:1px solid var(--line);border-radius:11px;background:var(--surface);cursor:pointer;padding:0;place-items:center}
+.burger span{display:block;width:18px;height:2px;background:var(--fg);border-radius:2px;margin:2.5px auto;transition:transform .25s,opacity .2s}
+.burger[aria-expanded="true"] span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.burger[aria-expanded="true"] span:nth-child(2){opacity:0}
+.burger[aria-expanded="true"] span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+.m-menu{position:fixed;inset:70px 0 auto 0;z-index:49;background:var(--bg);border-bottom:1px solid var(--line);padding:12px clamp(18px,4vw,40px) 24px;display:none;flex-direction:column;gap:4px;animation:menuIn .25s var(--ease)}
+@keyframes menuIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+.m-menu.is-open{display:flex}
+.m-menu a{color:var(--fg);text-decoration:none;font-size:17px;padding:13px 4px;border-bottom:1px solid var(--line-soft)}
+.m-menu a:last-child{border-bottom:0}
+
+.hero{position:relative;padding-block:clamp(48px,7vw,110px) clamp(56px,7vw,96px);overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:linear-gradient(to bottom,#000,transparent 85%);mask-image:linear-gradient(to bottom,#000,transparent 85%)}
+[data-theme="light"] .hero::before{background-image:linear-gradient(rgba(0,0,0,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.04) 1px,transparent 1px)}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr);gap:clamp(32px,5vw,72px);align-items:center;position:relative;z-index:1}
+.spec-line{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:8px 15px;border:1px solid var(--line);border-radius:999px;background:color-mix(in srgb,var(--surface) 80%,transparent)}
+.spec-line::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok);animation:blink 2.4s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.hero h1{font-size:clamp(32px,4.8vw,58px);margin-top:26px;letter-spacing:-.03em;font-weight:800}
+.hero h1 .accent{background:linear-gradient(100deg,var(--accent),var(--accent-2) 60%,var(--ok));background-clip:text;-webkit-background-clip:text;color:transparent}
+.lead{margin-top:22px;max-width:52ch;font-size:clamp(16px,1.5vw,18.5px);color:var(--muted)}
+.hero-actions{display:flex;flex-wrap:wrap;gap:13px;margin-top:34px}
+.hero-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:46px;padding-top:30px;border-top:1px solid var(--line-soft);max-width:520px}
+.hero-stat-num{font-family:var(--font-display);font-weight:700;font-size:clamp(22px,2.6vw,32px);letter-spacing:-.02em}
+.hero-stat-lbl{font-family:var(--font-mono);font-size:11.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:6px}
+.hero-stat-num.is-ok{color:var(--ok);font-size:clamp(18px,2.2vw,26px) !important}
+.hero-stat-num.is-no{color:var(--danger);font-size:clamp(22px,2.6vw,32px) !important}
+.price-line{margin-top:20px;font-size:16.5px;color:var(--muted)}
+.price-line strong{color:var(--fg);font-family:var(--font-display);font-size:21px}
+
+.hero-stage{position:relative;width:100%;max-width:680px;aspect-ratio:680/580;margin-inline:auto}
+.hero-art{position:absolute;inset:0;isolation:isolate}
+.hero-art::before{content:"";position:absolute;inset:12%;border-radius:50%;background:radial-gradient(circle,rgba(255,179,71,.25),transparent 62%);filter:blur(50px);z-index:0;animation:heroGlowPulse 6s ease-in-out infinite}
+@keyframes heroGlowPulse{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
+.hero-wires{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;overflow:visible}
+.hero-wire{fill:none;stroke:var(--accent);stroke-width:1.8;stroke-linecap:round;stroke-dasharray:6 9;opacity:.5;animation:heroWireFlow 2.4s linear infinite}
+.hero-wire.w2{animation-duration:2.9s;stroke:var(--ok);opacity:.55}
+.hero-wire.w3{animation-duration:3.4s;stroke:var(--avito);opacity:.5}
+@keyframes heroWireFlow{to{stroke-dashoffset:-30}}
+.hero-signal{filter:drop-shadow(0 0 6px currentColor)}
+
+.hero-tile{position:absolute;width:22%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;border:1px solid var(--line);background:#ffffff;box-shadow:0 16px 36px -16px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.05);z-index:2;cursor:pointer;animation:heroTileFloat 8s ease-in-out infinite;transition:transform .45s cubic-bezier(.34,1.4,.5,1),border-color .3s,box-shadow .4s,z-index 0s;will-change:transform}
+.hero-tile:hover{transform:translateY(-10px) scale(1.1) rotate(0)!important;border-color:var(--accent);box-shadow:0 28px 60px -20px rgba(255,179,71,.6);z-index:6}
+@keyframes heroTileFloat{0%,100%{transform:translateY(0) rotate(var(--rot,0deg))}50%{transform:translateY(-14px) rotate(calc(var(--rot,0deg) * -.5))}}
+.tile-l1{left:0;top:3%;--rot:-5deg;animation-delay:0s}
+.tile-l2{left:0;top:37%;--rot:-3deg;animation-delay:1.4s}
+.tile-l3{left:0;top:71%;--rot:-5deg;animation-delay:2.8s}
+.tile-r1{right:0;top:3%;--rot:5deg;animation-delay:.7s}
+.tile-r2{right:0;top:37%;--rot:3deg;animation-delay:2.1s}
+.tile-r3{right:0;top:71%;--rot:5deg;animation-delay:3.5s}
+.hero-tile-imgs{position:absolute;inset:0;border-radius:inherit;overflow:hidden;background:#ffffff}
+.hero-tile-imgs img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:14px;opacity:0;transition:opacity .4s cubic-bezier(.4,0,.2,1);will-change:opacity}
+.hero-tile.tile-fill .hero-tile-imgs{background:#0a1119}
+.hero-tile.tile-fill .hero-tile-imgs img{object-fit:cover;padding:0;background:#0a1119}
+.hero-tile-fallback{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--font-display);font-weight:700;font-size:clamp(11px,1.4vw,15px);letter-spacing:.16em;text-transform:uppercase;color:var(--accent);opacity:.75;transition:opacity .4s;pointer-events:none;text-align:center;padding:0 10px;line-height:1.2}
+.hero-tile-fallback.is-hidden{opacity:0}
+.hero-tile-label{position:absolute;left:9px;bottom:9px;z-index:4;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(7,9,13,.8);border:1px solid rgba(255,179,71,.5);padding:3px 9px;border-radius:5px;backdrop-filter:blur(4px);pointer-events:none;opacity:.9;transition:opacity .3s,border-color .3s}
+.hero-tile:hover .hero-tile-label{opacity:1;border-color:var(--accent)}
+
+.hero-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:26%;aspect-ratio:1/1;z-index:5;display:grid;place-items:center}
+.hero-center-inner{position:relative;width:100%;height:100%;border-radius:26px;background:linear-gradient(145deg,rgba(255,179,71,.22),rgba(255,179,71,.05) 60%),var(--surface);border:2px solid rgba(255,179,71,.55);display:grid;place-items:center;overflow:hidden;box-shadow:0 0 70px rgba(255,179,71,.4),inset 0 1px 0 rgba(255,255,255,.1);animation:heroCenterPulse 3.8s ease-in-out infinite}
+.hero-center-inner::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(60% 60% at 30% 25%,rgba(255,255,255,.2),transparent 60%)}
+.hero-center-inner img{position:relative;z-index:1;width:82%;height:82%;object-fit:contain;filter:drop-shadow(0 8px 16px rgba(0,0,0,.4));animation:heroLogoBreathe 4.5s ease-in-out infinite}
+.hero-center-inner.is-fallback img{display:none}
+.hero-center-fallback{display:none;font-family:var(--font-display);font-weight:700;font-size:clamp(12px,1.5vw,17px);letter-spacing:.14em;color:var(--accent);text-align:center;text-shadow:0 0 18px rgba(255,179,71,.6);animation:heroLogoBreathe 4.5s ease-in-out infinite}
+.hero-center-inner.is-fallback .hero-center-fallback{display:block}
+@keyframes heroLogoBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@keyframes heroCenterPulse{0%,100%{box-shadow:0 0 70px rgba(255,179,71,.4),inset 0 1px 0 rgba(255,255,255,.1)}50%{box-shadow:0 0 110px rgba(255,179,71,.7),inset 0 1px 0 rgba(255,255,255,.15)}}
+.hero-center-ring{position:absolute;inset:0;border-radius:26px;border:2px solid var(--accent);opacity:0;pointer-events:none;animation:heroRing 3.6s ease-out infinite}
+.hero-center-ring-2{animation-delay:1.8s;border-color:var(--ok)}
+@keyframes heroRing{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.9);opacity:0}}
+@media(max-width:1020px){.hero-tile{width:24%}}
+@media(max-width:900px){.hero-stage{max-width:540px}}
+@media(max-width:640px){.hero-tile{width:27%}.hero-center{width:28%}}
+
+.ticker{position:relative;padding-block:20px;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);background:color-mix(in srgb,var(--surface) 50%,transparent);overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.ticker-track{display:flex;gap:40px;width:max-content;white-space:nowrap;animation:tickerRoll 42s linear infinite;font-family:var(--font-mono);font-size:13.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);will-change:transform}
+.ticker-track span{display:inline-flex;align-items:center;gap:40px}
+.ticker-track span::after{content:"◆";color:var(--accent);opacity:.55}
+@keyframes tickerRoll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ticker:hover .ticker-track{animation-play-state:paused}
+
+.section{padding-block:clamp(64px,9vw,128px);border-top:1px solid var(--line-soft)}
+.section h2{font-size:clamp(28px,4vw,46px);letter-spacing:-.03em;font-weight:800}
+.intro{margin-top:18px;max-width:60ch;color:var(--muted);font-size:17.5px}
+.section-head{margin-bottom:52px;max-width:820px;position:relative}
+.section-kicker{display:inline-block;font-family:var(--font-mono);font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--accent);margin-bottom:16px}
+.section-kicker::before{content:"— ";opacity:.6}
+.section-num{position:absolute;top:-48px;right:0;font-family:var(--font-display);font-weight:800;font-size:clamp(72px,10vw,130px);color:var(--accent);opacity:.06;line-height:1;pointer-events:none;user-select:none}
+
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s var(--ease),transform .7s var(--ease);will-change:opacity,transform}
+.reveal.is-in{opacity:1;transform:none}
+.reveal.d1{transition-delay:.08s}.reveal.d2{transition-delay:.16s}.reveal.d3{transition-delay:.24s}.reveal.d4{transition-delay:.32s}
+
+.highlights{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px}
+.hl{padding:30px 26px;border:1px solid var(--line);border-radius:var(--r-lg);background:linear-gradient(180deg,color-mix(in srgb,var(--surface-2) 85%,transparent),color-mix(in srgb,var(--surface) 50%,transparent));position:relative;overflow:hidden;transition:border-color .25s,transform .25s,box-shadow .25s}
+.hl::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0;transition:opacity .3s}
+.hl:hover{border-color:rgba(255,179,71,.5);transform:translateY(-5px);box-shadow:var(--shadow-lift)}
+.hl:hover::before{opacity:1}
+.hl-icon{display:grid;place-items:center;width:50px;height:50px;border-radius:13px;background:rgba(255,179,71,.12);border:1px solid rgba(255,179,71,.25);color:var(--accent);margin-bottom:18px;transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+.hl:hover .hl-icon{transform:scale(1.1) rotate(-4deg)}
+.hl h3{font-size:19px;margin-bottom:9px}
+.hl p{color:var(--muted);font-size:15px}
+
+.instr-preview{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:center;padding:clamp(26px,4vw,40px);border:1px solid var(--line);border-radius:var(--r-lg);background:linear-gradient(135deg,rgba(255,179,71,.08),transparent 70%),var(--surface);position:relative;overflow:hidden}
+.instr-preview::before{content:"";position:absolute;top:-40%;right:-15%;width:340px;height:340px;background:radial-gradient(circle,rgba(255,179,71,.14),transparent 65%);pointer-events:none}
+.instr-preview-info{position:relative;z-index:1}
+.instr-preview-info h3{font-size:clamp(22px,2.8vw,30px);margin-top:12px}
+.instr-preview-info p{margin-top:12px;color:var(--muted);max-width:52ch;font-size:16px}
+.instr-preview .btn{position:relative;z-index:1;min-height:58px;padding:0 32px;font-size:16.5px}
+@media(max-width:720px){.instr-preview{grid-template-columns:minmax(0,1fr)}.instr-preview .btn{width:100%}}
+
+.components-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px;margin-top:8px}
+.comp-btn{display:flex;flex-direction:column;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;cursor:pointer;text-align:left;font-family:inherit;color:var(--fg);transition:border-color .25s,box-shadow .3s,transform .25s;position:relative}
+.comp-btn:hover{border-color:rgba(255,179,71,.55);box-shadow:var(--shadow-card);transform:translateY(-4px)}
+.comp-btn-visual{aspect-ratio:16/10;background:#fff;border-bottom:1px solid var(--line);overflow:hidden;position:relative;display:grid;place-items:center}
+.comp-btn-visual img{display:block;max-width:100%;max-height:100%;object-fit:contain;padding:12px;transition:transform .4s var(--ease)}
+.comp-btn:hover .comp-btn-visual img{transform:scale(1.04)}
+.comp-btn-body{padding:18px 20px 20px;display:flex;flex-direction:column;gap:7px;flex:1}
+.comp-btn-name{font-family:var(--font-display);font-weight:600;font-size:16px}
+.comp-btn-desc{font-size:13px;color:var(--muted);line-height:1.55}
+.comp-btn-hint{font-family:var(--font-mono);font-size:10.5px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-top:auto;padding-top:12px;opacity:.7;transition:opacity .2s}
+.comp-btn:hover .comp-btn-hint{opacity:1}
+.comp-btn-idx{position:absolute;top:12px;left:14px;font-family:var(--font-mono);font-size:11px;color:#fff;background:rgba(7,9,13,.75);padding:3px 8px;border-radius:6px;z-index:2;border:1px solid rgba(255,179,71,.4)}
+.pack-note{margin-top:40px;color:var(--muted);font-size:15.5px;max-width:62ch}
+
+.compare-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r-lg);margin-top:8px;background:var(--surface)}
+.compare-table{width:100%;border-collapse:collapse;min-width:640px}
+.compare-table th,.compare-table td{padding:16px 20px;text-align:left;border-bottom:1px solid var(--line-soft);font-size:15px}
+.compare-table th{font-family:var(--font-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);font-weight:500;background:color-mix(in srgb,var(--surface-2) 60%,transparent)}
+.compare-table th:not(:first-child),.compare-table td:not(:first-child){text-align:center}
+.compare-table tr:last-child td{border-bottom:0}
+.compare-table .row-label{font-weight:600;color:var(--fg)}
+.compare-table .row-note{display:block;font-size:12.5px;color:var(--muted);font-weight:400;margin-top:3px}
+.compare-table .col-highlight{background:rgba(255,179,71,.05)}
+.compare-table th.col-highlight{background:rgba(255,179,71,.12);color:var(--accent)}
+.compare-check{color:var(--ok);font-weight:600;display:inline-flex;align-items:center;gap:6px;font-size:14.5px}
+.compare-cross{color:var(--muted-2);font-size:14px;font-style:italic}
+
+.scheme-card{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:36px;align-items:center;padding:clamp(26px,4vw,44px);background:linear-gradient(135deg,rgba(255,179,71,.06),transparent 70%),var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);position:relative;overflow:hidden}
+.scheme-card::before{content:"";position:absolute;top:-30%;right:-10%;width:400px;height:400px;background:radial-gradient(circle,rgba(255,179,71,.1),transparent 65%);pointer-events:none}
+.scheme-info{position:relative;z-index:1}
+.scheme-info h3{font-size:clamp(22px,2.8vw,30px);margin-bottom:14px;margin-top:12px}
+.scheme-info p{color:var(--muted);font-size:16px;margin-bottom:22px;max-width:46ch}
+.scheme-actions{display:flex;flex-wrap:wrap;gap:12px}
+.scheme-preview{position:relative;aspect-ratio:4/3;border-radius:var(--r-md);border:1px dashed var(--line);background:repeating-linear-gradient(45deg,color-mix(in srgb,var(--line-soft) 50%,transparent) 0 14px,transparent 14px 28px),var(--surface-2);display:grid;place-items:center;overflow:hidden}
+.scheme-preview img{display:block;max-width:100%;max-height:100%;object-fit:contain}
+.scheme-preview-placeholder{text-align:center;color:var(--muted-2);padding:24px;font-family:var(--font-mono);font-size:12.5px;line-height:1.7}
+.scheme-preview-placeholder svg{display:block;margin:0 auto 12px;opacity:.5;color:var(--accent)}
+@media(max-width:820px){.scheme-card{grid-template-columns:1fr}}
+
+.guide-btn-row{display:flex;justify-content:center;margin-top:24px}
+.guide-btn{display:inline-flex;align-items:center;gap:12px;padding:18px 32px;border-radius:14px;background:linear-gradient(135deg,rgba(255,179,71,.12),rgba(255,179,71,.04));border:1px solid rgba(255,179,71,.4);color:var(--fg);cursor:pointer;font-family:inherit;font-size:16px;font-weight:600;transition:all .25s}
+.guide-btn:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 12px 32px -12px rgba(255,179,71,.5)}
+.guide-btn svg{color:var(--accent)}
+.guide-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;margin-top:32px}
+.guide-card{padding:24px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);transition:border-color .25s,transform .25s}
+.guide-card:hover{border-color:rgba(255,179,71,.4);transform:translateY(-3px)}
+.guide-card-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:rgba(255,179,71,.1);border:1px solid rgba(255,179,71,.2);color:var(--accent);margin-bottom:14px}
+.guide-card h3{font-size:17px;margin-bottom:8px}
+.guide-card p{color:var(--muted);font-size:14.5px;line-height:1.6}
+
+.faq-search-wrap{max-width:620px;margin-bottom:22px}
+.faq-search{position:relative}
+.faq-search-input{width:100%;padding:18px 88px 18px 22px;background:var(--surface);border:1px solid var(--line);border-radius:14px;color:var(--fg);font:400 16px/1.4 var(--font-body);transition:border-color .2s,box-shadow .2s}
+.faq-search-input::placeholder{color:var(--muted-2)}
+.faq-search-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,179,71,.15)}
+.faq-search-icon{position:absolute;right:20px;top:50%;transform:translateY(-50%);color:var(--muted-2);pointer-events:none}
+.faq-search-clear{position:absolute;right:52px;top:50%;transform:translateY(-50%);width:28px;height:28px;border:0;background:var(--surface-2);border-radius:8px;color:var(--muted);cursor:pointer;display:none;place-items:center;transition:background .2s,color .2s}
+.faq-search-clear:hover{background:var(--surface-3);color:var(--fg)}
+.faq-search-clear.is-visible{display:grid}
+.faq-suggest{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;align-items:center;font-size:13.5px}
+.faq-suggest-label{color:var(--muted-2);font-family:var(--font-mono);font-size:12px;letter-spacing:.06em;margin-right:4px}
+.faq-suggest-btn{padding:6px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);font:500 13px/1.2 var(--font-body);cursor:pointer;transition:all .2s}
+.faq-suggest-btn:hover{border-color:var(--accent);color:var(--accent)}
+.faq-counter{font-family:var(--font-mono);font-size:12.5px;color:var(--muted-2);margin-bottom:14px}
+.faq-counter b{color:var(--accent);font-weight:500}
+.faq-empty{display:none;padding:48px 28px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:var(--r-md)}
+.faq-empty.is-visible{display:block}
+.faq-empty b{color:var(--fg);display:block;margin-bottom:8px;font-size:17px}
+.faq{border-top:1px solid var(--line);max-width:880px}
+.faq details{border-bottom:1px solid var(--line-soft);transition:background .2s}
+.faq details[open]{background:color-mix(in srgb,var(--accent) 3%,transparent)}
+.faq summary{display:flex;justify-content:space-between;align-items:baseline;gap:20px;padding:22px 0;font-weight:600;font-size:17px;cursor:pointer;list-style:none;transition:color .2s}
+.faq summary:hover{color:var(--accent-2)}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font-family:var(--font-mono);font-size:21px;color:var(--accent);flex:none;transition:transform .3s}
+.faq details[open] summary::after{content:"−"}
+.faq details p{padding-bottom:24px;max-width:66ch;color:var(--muted);font-size:15.5px}
+
+.avito-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:center;max-width:880px;padding:clamp(26px,4vw,40px);background:linear-gradient(135deg,rgba(0,170,255,.09),transparent 70%),var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);position:relative;overflow:hidden}
+.avito-card::before{content:"";position:absolute;top:-40%;right:-15%;width:340px;height:340px;background:radial-gradient(circle,rgba(0,170,255,.16),transparent 65%);pointer-events:none}
+.avito-card-info{position:relative;z-index:1}
+.avito-card-info h3{font-size:clamp(22px,2.8vw,30px);margin-top:14px}
+.avito-card-info p{margin-top:14px;color:var(--muted);max-width:50ch;font-size:16px}
+.avito-badge{display:inline-block;padding:6px 14px;background:linear-gradient(135deg,#00aaff,#33c2ff);color:#fff;font:700 12px/1 var(--font-body);border-radius:6px;letter-spacing:.06em}
+.avito-card .btn{min-height:58px;padding:0 32px;font-size:16.5px;position:relative;z-index:1}
+.stock{margin-top:14px;display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:12.5px;color:var(--ok)}
+.stock::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.stock.is-no{color:var(--danger)}
+.stock.is-no::before{background:var(--danger);box-shadow:0 0 8px var(--danger)}
+.privacy{margin-top:22px;max-width:66ch;color:var(--muted-2);font-size:14.5px}
+.avito-qr-block{display:flex;gap:24px;align-items:center;margin-top:24px;padding:20px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface-2);flex-wrap:wrap}
+.qr-img{width:140px;height:140px;border-radius:12px;background:#fff;padding:10px;flex:none;border:1px solid var(--line)}
+.qr-info{flex:1;min-width:200px}
+.qr-info h4{font-size:15px;margin-bottom:8px}
+.qr-info p{color:var(--muted);font-size:14px;line-height:1.6}
+
+.contact-form{display:grid;gap:18px;max-width:680px}
+.cf-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.cf-row{grid-template-columns:1fr}}
+.cf-field{display:grid;gap:8px}
+.cf-field span{font-family:var(--font-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.cf-field input,
+.cf-field textarea,
+.cf-field select{width:100%;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:11px;color:var(--fg);font:400 16px/1.4 var(--font-body);transition:border-color .2s,box-shadow .2s}
+.cf-field textarea{resize:vertical;min-height:110px;font-family:var(--font-body)}
+.cf-field input:focus,
+.cf-field textarea:focus,
+.cf-field select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,179,71,.15)}
+.cf-field input::placeholder,
+.cf-field textarea::placeholder{color:var(--muted-2)}
+.cf-status{font-family:var(--font-mono);font-size:13.5px;margin-top:4px;min-height:20px}
+.cf-status.is-ok{color:var(--ok)}
+.cf-status.is-error{color:var(--danger)}
+#contact-submit{justify-self:start;min-width:200px}
+#contact-submit:disabled{opacity:.6;cursor:not-allowed}
+
+.modal-backdrop{position:fixed;inset:0;z-index:200;background:rgba(4,6,9,.9);backdrop-filter:blur(6px);display:grid;place-items:center;padding:20px;opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s;overflow-y:auto}
+.modal-backdrop.is-open{opacity:1;visibility:visible}
+.modal{background:linear-gradient(180deg,var(--surface-2),var(--surface));border:1px solid var(--line);border-radius:var(--r-lg);max-width:720px;width:100%;max-height:92vh;overflow-y:auto;padding:clamp(22px,3.5vw,36px);position:relative;transform:translateY(22px) scale(.96);transition:transform .3s cubic-bezier(.34,1.3,.5,1);box-shadow:0 40px 80px -20px rgba(0,0,0,.75);margin:auto}
+.modal-backdrop.is-open .modal{transform:none}
+.modal-close{position:absolute;top:16px;right:16px;z-index:2;width:38px;height:38px;border-radius:10px;background:var(--surface-3);border:1px solid var(--line);color:var(--muted);cursor:pointer;font-size:16px;display:grid;place-items:center;transition:border-color .2s,color .2s}
+.modal-close:hover{border-color:var(--accent);color:var(--fg)}
+.modal-visual{margin:0 0 22px;border-radius:12px;overflow:hidden;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;padding:20px;min-height:200px}
+.modal-visual img{display:block;max-width:100%;max-height:400px;object-fit:contain}
+.modal-title{font-size:clamp(20px,2.6vw,26px);margin-bottom:6px}
+.modal-sub{font-family:var(--font-mono);font-size:12.5px;color:var(--accent);letter-spacing:.08em;text-transform:uppercase;margin-bottom:16px}
+.modal-text{font-size:15.5px;color:var(--muted);line-height:1.7}
+
+.guide-modal-backdrop{position:fixed;inset:0;z-index:210;background:rgba(4,6,9,.95);backdrop-filter:blur(6px);display:grid;place-items:start center;padding:40px 20px;opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s;overflow-y:auto}
+.guide-modal-backdrop.is-open{opacity:1;visibility:visible}
+.guide-modal{background:linear-gradient(180deg,var(--surface-2),var(--surface));border:1px solid var(--line);border-radius:var(--r-lg);max-width:900px;width:100%;padding:clamp(28px,4vw,48px);position:relative;transform:translateY(30px);transition:transform .35s;margin-top:20px}
+.guide-modal-backdrop.is-open .guide-modal{transform:none}
+.guide-modal h2{font-size:clamp(26px,3.5vw,38px);margin-bottom:8px}
+.guide-modal .intro{margin-bottom:36px}
+.guide-section{margin-bottom:44px;padding-bottom:36px;border-bottom:1px solid var(--line-soft)}
+.guide-section:last-child{border-bottom:0;margin-bottom:0;padding-bottom:0}
+.guide-section-head{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.guide-section-num{font-family:var(--font-mono);font-size:13px;color:var(--accent);background:rgba(255,179,71,.1);border:1px solid rgba(255,179,71,.3);padding:4px 12px;border-radius:8px;font-weight:600}
+.guide-section h3{font-size:22px}
+.guide-section-desc{color:var(--muted);font-size:15.5px;margin-bottom:18px;line-height:1.7}
+.guide-feature{display:flex;gap:14px;padding:16px 0;border-bottom:1px solid var(--line-soft)}
+.guide-feature:last-child{border-bottom:0}
+.guide-feature-icon{flex:none;width:38px;height:38px;border-radius:10px;background:rgba(255,179,71,.08);border:1px solid rgba(255,179,71,.2);display:grid;place-items:center;color:var(--accent)}
+.guide-feature-icon svg{width:20px;height:20px}
+.guide-feature-body h4{font-size:15.5px;margin-bottom:4px;font-family:var(--font-body);font-weight:600}
+.guide-feature-body p{font-size:14px;color:var(--muted);line-height:1.6}
+
+.foot{border-top:1px solid var(--line-soft);padding-block:52px 110px;color:var(--muted);font-size:14.5px}
+.foot-inner{display:grid;gap:14px;max-width:820px}
+.foot-links{display:flex;flex-wrap:wrap;gap:10px 22px}
+.foot-links a{display:inline-flex;align-items:center;gap:8px;color:var(--muted);text-decoration:none;font-size:14px;transition:color .2s}
+.foot-links a:hover{color:var(--fg)}
+
+.cta-bar{position:fixed;left:0;right:0;bottom:0;z-index:48;display:none;padding:12px clamp(18px,4vw,40px) calc(12px + env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(10px);border-top:1px solid var(--line);transition:transform .3s var(--ease)}
+.cta-bar .btn{width:100%}
+.cta-bar.is-hidden{transform:translateY(100%)}
+
+@media(max-width:900px){.hero-grid{grid-template-columns:minmax(0,1fr)}.nav a.link{display:none}.burger{display:grid}.cta-bar{display:block}}
+@media(max-width:640px){body{font-size:16px}.hero-stats{gap:8px;margin-top:36px}.section-num{display:none}.components-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}.avito-card{grid-template-columns:minmax(0,1fr)}.avito-card .btn{width:100%}.hero-actions .btn{flex:1;justify-content:center}.guide-grid{grid-template-columns:1fr}.avito-qr-block{flex-direction:column;align-items:flex-start}}
+
+/* ============================================================
+   МОБИЛЬНЫЕ ОПТИМИЗАЦИИ — грузится быстрее в 3-5 раз
+   ============================================================ */
+@media (max-width: 1024px) {
+  body::before { display: none; }
+  .noise { display: none; }
+}
+
+@media (max-width: 768px) {
+  .hero-art::before { display: none; }
+  .avito-card::before,
+  .scheme-card::before,
+  .instr-preview::before,
+  .hero-center-inner::after { display: none; }
+  .hero-center-ring,
+  .hero-center-ring-2 { display: none; }
+  .spec-line::before { animation: none; box-shadow: none; }
+  .hl::before { display: none; }
+  .progress { display: none; }
+  .hero-wire { animation: none; }
+  .hero-signal { display: none; }
+  .ticker-track { animation-duration: 90s; }
+  .reveal, .hero-tile, .to-top, .ticker-track, .progress { will-change: auto; }
+  .hl:hover, .comp-btn:hover, .guide-card:hover { transform: none; box-shadow: none; }
+  .hero-tile { animation: none; }
+  .hero-tile:hover { transform: none !important; }
+  .hero-center-inner { animation: none; }
+  .section { padding-block: clamp(40px, 8vw, 64px); }
+  .hero { padding-block: 32px 48px; }
+  .contact-form, .modal { max-width: 100%; }
+  .avito-card { padding: 20px; }
+  .avito-card .btn { width: 100%; }
+}
+
+@media (max-width: 400px) {
+  .ticker { display: none; }
+  .section-num { display: none; }
+  .hero-tile-label { font-size: 8px; padding: 2px 6px; }
+  .hero-stat-lbl { font-size: 10px; }
+  .hero-tile { display: none; }
+  .hero-center { width: 70%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+  .reveal { opacity: 1; transform: none; }
+  .ticker-track { animation: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress" aria-hidden="true"></div>
+<div class="noise" aria-hidden="true"></div>
+
+<div class="gate" id="gate" role="dialog" aria-modal="true" aria-label="Приветствие">
+  <div class="gate-bg"></div>
+  <div class="gate-art" aria-hidden="true">
+    <svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke="#ffb347" stroke-width="1.4" opacity=".3" stroke-linecap="round">
+        <path class="gate-wire" d="M -40 180 C 200 120 400 260 620 200 C 850 140 1050 280 1240 220"/>
+        <path class="gate-wire" d="M -40 420 C 220 480 420 340 640 400 C 860 460 1060 320 1240 380" style="animation-duration:3.2s"/>
+        <path class="gate-wire" d="M -40 640 C 180 580 380 720 600 660 C 820 600 1020 740 1240 680" style="animation-duration:3.8s"/>
+      </g>
+      <g class="gate-mod gm1" transform="translate(160 140)"><rect x="-50" y="-35" width="100" height="70" rx="6" fill="#2f6ec2" stroke="#0e2a55" stroke-width="1.5"/><text x="0" y="6" text-anchor="middle" font-family="monospace" font-size="14" font-weight="600" fill="#fff">CC1101</text></g>
+      <g class="gate-mod gm2" transform="translate(1040 200)"><rect x="-55" y="-40" width="110" height="80" rx="6" fill="#e87a2a" stroke="#5a2408" stroke-width="1.5"/><rect x="-42" y="-28" width="84" height="56" rx="3" fill="#020608"/><text x="0" y="6" text-anchor="middle" font-family="monospace" font-size="11" font-weight="600" fill="#ffb347">DISPLAY</text></g>
+      <g class="gate-mod gm3" transform="translate(140 660)"><rect x="-55" y="-38" width="110" height="76" rx="6" fill="#d94444" stroke="#5a0f0f" stroke-width="1.5"/><text x="0" y="6" text-anchor="middle" font-family="monospace" font-size="14" font-weight="600" fill="#fff">PN532</text></g>
+      <g class="gate-mod gm4" transform="translate(1060 640)"><rect x="-50" y="-35" width="100" height="70" rx="6" fill="#2f6ec2" stroke="#0e2a55" stroke-width="1.5"/><text x="0" y="6" text-anchor="middle" font-family="monospace" font-size="14" font-weight="600" fill="#fff">NRF24</text></g>
+    </svg>
+  </div>
+  <div class="gate-veil"></div>
+  <div class="gate-inner">
+    <div class="gate-chip" aria-hidden="true">
+      <img src="img/bruce.webp" alt="" onerror="this.style.display='none';this.parentNode.innerHTML='<span class=fallback>BRUCE</span>'">
+    </div>
+    <p class="gate-kicker" data-shop>DIY-Project</p>
+    <h1>Набор для сборки Bruce<br>на ESP32-S3</h1>
+    <p class="gate-lead">Плата уже прошита под экран 1,14 дюйма. В коробке — радиомодули, NFC, ИК, SD, кнопки и плата для пайки 60×80 мм.</p>
+    <button class="btn btn-primary btn-lg" type="button" id="gate-start">Начать</button>
+    <p class="gate-hint">Нажмите «Начать», чтобы перейти на сайт</p>
+  </div>
+</div>
+<script>
+try {
+  if (sessionStorage.getItem('diy_entered') === '1') {
+    var g=document.getElementById('gate'); if(g){g.classList.add('is-hidden');g.setAttribute('hidden','');}
+  } else { document.body.style.overflow = 'hidden'; }
+} catch (e) { document.body.style.overflow = 'hidden'; }
+</script>
+
+<header class="bar" id="bar">
+  <div class="wrap bar-inner">
+    <a class="brand" href="#top" aria-label="На главную">
+      <span class="brand-chip" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 26 26" fill="none"><rect x="2" y="2" width="22" height="22" rx="4" stroke="#ffb347" stroke-width="2"/><path d="M7 9h12M7 13h12M7 17h7" stroke="#ffb347" stroke-width="2" stroke-linecap="round"/></svg>
+      </span>
+      <span data-shop>DIY-Project</span>
+    </a>
+    <nav class="nav" aria-label="Разделы">
+      <a class="link" href="#parts">Состав</a>
+      <a class="link" href="#compare">Почему мы</a>
+      <a class="link" href="instructions.html">Инструкция</a>
+      <a class="link" href="#scheme">Схема</a>
+      <a class="link" href="#guide">Руководство</a>
+      <a class="link" href="#faq">Вопросы</a>
+      <a class="link" href="#chat">Написать нам</a>
+      <a class="link" href="legal.html">Законность</a>
+      <button class="theme-btn" id="theme-btn" aria-label="Сменить тему" title="Сменить тему">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="4" class="theme-sun"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" class="theme-rays"/></svg>
+      </button>
+      <a class="btn btn-avito btn-sm btn-pulse" href="#order">Заказать</a>
+      <button class="burger" id="burger" aria-label="Открыть меню" aria-expanded="false" aria-controls="m-menu"><span></span><span></span><span></span></button>
+    </nav>
+  </div>
+</header>
+<div class="m-menu" id="m-menu">
+  <a href="#parts">Состав</a>
+  <a href="#compare">Почему мы</a>
+  <a href="instructions.html">Инструкция</a>
+  <a href="#scheme">Схема подключения</a>
+  <a href="#guide">Руководство Bruce</a>
+  <a href="#faq">Вопросы</a>
+  <a href="#chat">Написать нам</a>
+  <a href="legal.html">Законность продажи</a>
+  <a href="#order">Заказать</a>
+</div>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="spec-line">ESP32-S3 · 300–928 МГц · 2,4 ГГц · 13,56 МГц · ИК</span>
+        <h1>Набор для сборки <span class="accent">Bruce</span> на ESP32-S3</h1>
+        <p class="lead">Плата уже прошита. Готовой прошивки Bruce для экрана 1,14″ нет — мы сделали свою и записали её на каждую плату. Остальное лежит в коробке: радиомодули, NFC, ИК, SD, кнопки и плата для пайки 60×80 мм.</p>
+        <div class="hero-actions">
+          <a class="btn btn-avito btn-lg btn-pulse" href="#order">Заказать на Авито</a>
+          <a class="btn btn-lg btn-ghost" href="#parts">Смотреть состав</a>
+          <button class="btn btn-lg btn-primary" type="button" id="hero-guide-btn">📖 Руководство Bruce</button>
+        </div>
+        <div class="hero-stats">
+          <div>
+            <div class="hero-stat-num" id="stock-indicator">—</div>
+            <div class="hero-stat-lbl">наличие</div>
+          </div>
+          <div>
+            <div class="hero-stat-num">5</div>
+            <div class="hero-stat-lbl">диапазонов</div>
+          </div>
+          <div>
+            <div class="hero-stat-num">~2 ч</div>
+            <div class="hero-stat-lbl">на сборку</div>
+          </div>
+        </div>
+        <p class="price-line" id="hero-price" hidden></p>
+      </div>
+
+      <div class="hero-stage" id="hero-visual" aria-label="Галерея: 6 карточек с фото вокруг иконки Bruce">
+        <div class="hero-art">
+          <svg class="hero-wires" viewBox="0 0 680 580" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path class="hero-wire" d="M 148 108 Q 195 120 215 165 T 258 250"/>
+            <path class="hero-wire w2" d="M 148 290 L 258 290"/>
+            <path class="hero-wire w3" d="M 148 472 Q 195 460 215 415 T 258 330"/>
+            <path class="hero-wire" d="M 532 108 Q 485 120 465 165 T 422 250"/>
+            <path class="hero-wire w2" d="M 532 290 L 422 290"/>
+            <path class="hero-wire w3" d="M 532 472 Q 485 460 465 415 T 422 330"/>
+            <circle r="3.5" fill="#ffb347" class="hero-signal" style="color:#ffb347"><animateMotion dur="2.6s" repeatCount="indefinite" path="M 148 108 Q 195 120 215 165 T 258 250"/></circle>
+            <circle r="3.5" fill="#4fd1a1" class="hero-signal" style="color:#4fd1a1"><animateMotion dur="3.1s" repeatCount="indefinite" path="M 148 290 L 258 290"/></circle>
+            <circle r="3.5" fill="#00aaff" class="hero-signal" style="color:#00aaff"><animateMotion dur="3.4s" repeatCount="indefinite" path="M 148 472 Q 195 460 215 415 T 258 330"/></circle>
+            <circle r="3.5" fill="#ffb347" class="hero-signal" style="color:#ffb347"><animateMotion dur="2.9s" repeatCount="indefinite" path="M 532 108 Q 485 120 465 165 T 422 250"/></circle>
+            <circle r="3.5" fill="#4fd1a1" class="hero-signal" style="color:#4fd1a1"><animateMotion dur="3.3s" repeatCount="indefinite" path="M 532 290 L 422 290"/></circle>
+            <circle r="3.5" fill="#00aaff" class="hero-signal" style="color:#00aaff"><animateMotion dur="3.6s" repeatCount="indefinite" path="M 532 472 Q 485 460 465 415 T 422 330"/></circle>
+          </svg>
+
+          <div class="hero-tile tile-l1 tile-fill" data-hero="code"><div class="hero-tile-imgs"></div><span class="hero-tile-label">Код</span></div>
+          <div class="hero-tile tile-l2" data-hero="parts"><div class="hero-tile-imgs"></div><span class="hero-tile-label">Компоненты</span></div>
+          <div class="hero-tile tile-l3" data-hero="solder"><div class="hero-tile-imgs"></div><span class="hero-tile-label">Пайка</span></div>
+          <div class="hero-tile tile-r1 tile-fill" data-hero="menu"><div class="hero-tile-imgs"></div><span class="hero-tile-label">Меню</span></div>
+          <div class="hero-tile tile-r2" data-hero="modules"><div class="hero-tile-imgs"></div><span class="hero-tile-label">Модули</span></div>
+          <div class="hero-tile tile-r3" data-hero="final"><div class="hero-tile-imgs"></div><span class="hero-tile-label">Готово</span></div>
+
+          <div class="hero-center">
+            <span class="hero-center-ring"></span>
+            <span class="hero-center-ring hero-center-ring-2"></span>
+            <div class="hero-center-inner" id="hero-center-inner">
+              <img src="img/bruce.webp" alt="" onerror="this.parentNode.classList.add('is-fallback')">
+              <span class="hero-center-fallback">BRUCE</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker-track">
+      <span>ESP32-S3</span><span>Wi-Fi</span><span>Bluetooth LE</span><span>CC1101 · Sub-GHz</span>
+      <span>NRF24 · 2,4 ГГц</span><span>PN532 · NFC</span><span>ИК-приём</span><span>ИК-передача</span>
+      <span>SD-карта</span><span>SPI · I²C · UART</span>
+      <span>ESP32-S3</span><span>Wi-Fi</span><span>Bluetooth LE</span><span>CC1101 · Sub-GHz</span>
+      <span>NRF24 · 2,4 ГГц</span><span>PN532 · NFC</span><span>ИК-приём</span><span>ИК-передача</span>
+      <span>SD-карта</span><span>SPI · I²C · UART</span>
+    </div>
+  </div>
+
+  <section class="section" id="highlights">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="section-kicker">Что внутри</span>
+        <h2>Готовый набор,<br>который сразу работает</h2>
+        <p class="intro">Не нужно ничего искать и докупать. Достали из коробки, припаяли модули, подали питание — устройство готово.</p>
+      </div>
+      <div class="highlights">
+        <div class="hl reveal d1"><div class="hl-icon"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 6L9 17l-5-5"/></svg></div><h3>Плата уже прошита</h3><p>ESP32-S3 приходит с готовой прошивкой Bruce под экран 1,14″. Ничего прошивать и настраивать не нужно.</p></div>
+        <div class="hl reveal d2"><div class="hl-icon"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M3 8l9-5 9 5M12 8v13"/></svg></div><h3>Всё в одной коробке</h3><p>Плата, экран, радио, NFC, ИК, SD, кнопки, плата для пайки, гребёнки, провода, конденсаторы — всё включено.</p></div>
+        <div class="hl reveal d3"><div class="hl-icon"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div><h3>Сборка за ~2 часа</h3><p>Модули припаиваются к плате 60×80 мм. Прошивка уже на ESP32-S3 — включил и работает.</p></div>
+      </div>
+      <div class="guide-btn-row reveal d4">
+        <button class="guide-btn" type="button" id="guide-btn-1">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          📖 Полное руководство по Bruce
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="parts">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="section-num">01</span>
+        <span class="section-kicker">Состав</span>
+        <h2>Что лежит в коробке</h2>
+        <p class="intro">Двенадцать позиций. Нажмите на карточку — откроется подробная информация о компоненте.</p>
+      </div>
+      <div class="components-grid reveal d1" id="components-grid"></div>
+      <p class="pack-note reveal d2">Детали разложены по пакетикам и пузырчатой плёнке и лежат в пластиковой коробке.</p>
+    </div>
+  </section>
+
+  <section class="section" id="compare">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="section-num">02</span>
+        <span class="section-kicker">Почему мы</span>
+        <h2>DIY-Project<br>vs другие маркетплейсы</h2>
+        <p class="intro">Мы собрали всё в одном месте и прошили плату. Вам не придётся искать 10 продавцов, ждать 3 недели и разбираться с прошивкой.</p>
+      </div>
+      <div class="compare-wrap reveal d1">
+        <table class="compare-table">
+          <thead><tr><th>Что важно</th><th class="col-highlight">DIY-Project</th><th>Другие маркетплейсы</th></tr></thead>
+          <tbody>
+            <tr><td class="row-label">ESP32-S3 с прошивкой Bruce<span class="row-note">готово к работе из коробки</span></td><td class="col-highlight"><span class="compare-check">✓ прошита</span></td><td><span class="compare-cross">искать прошивку и заливать</span></td></tr>
+            <tr><td class="row-label">Все модули в одном заказе</td><td class="col-highlight"><span class="compare-check">✓ 12 позиций</span></td><td><span class="compare-cross">8–10 разных продавцов</span></td></tr>
+            <tr><td class="row-label">Комплект целиком<span class="row-note">плата, провода, гребёнки, кнопки, колпачки</span></td><td class="col-highlight"><span class="compare-check">✓ всё включено</span></td><td><span class="compare-cross">докупать отдельно</span></td></tr>
+            <tr><td class="row-label">Готовый дисплей 1,14″<span class="row-note">подобран под прошивку</span></td><td class="col-highlight"><span class="compare-check">✓ подобрано</span></td><td><span class="compare-cross">можно купить не тот</span></td></tr>
+            <tr><td class="row-label">Макетная плата 60×80 мм</td><td class="col-highlight"><span class="compare-check">✓ в комплекте</span></td><td><span class="compare-cross">продают маленькие 4×6</span></td></tr>
+            <tr><td class="row-label">Конденсатор 100 мкФ<span class="row-note">для стабильного питания</span></td><td class="col-highlight"><span class="compare-check">✓ в комплекте</span></td><td><span class="compare-cross">про него забывают</span></td></tr>
+            <tr><td class="row-label">Схема подключения и инструкция<span class="row-note">плюс поддержка в Telegram</span></td><td class="col-highlight"><span class="compare-check">✓ на русском</span></td><td><span class="compare-cross">искать самому</span></td></tr>
+            <tr><td class="row-label">Совместимость проверена</td><td class="col-highlight"><span class="compare-check">✓ протестировано</span></td><td><span class="compare-cross">бывает несовместимость</span></td></tr>
+            <tr><td class="row-label">Защита покупателя и доставка</td><td class="col-highlight"><span class="compare-check">✓ через Авито</span></td><td><span class="compare-cross">зависит от продавца</span></td></tr>
+            <tr><td class="row-label">Срок сборки заказа</td><td class="col-highlight">за один вечер</td><td><span class="compare-cross">3–7 дней ожидания</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="instr">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="section-num">03</span>
+        <span class="section-kicker">Инструкция</span>
+        <h2>Как правильно собрать</h2>
+        <p class="intro">Отдельная страница с реалистичными анимациями каждого этапа: пайка, соединение модулей, подключение кнопок, проверка питания.</p>
+      </div>
+      <div class="instr-preview reveal d1">
+        <div class="instr-preview-info">
+          <span class="section-kicker">Открывается отдельная страница</span>
+          <h3>Пошаговая инструкция с анимациями</h3>
+          <p>Слева — большая анимированная сцена, справа — текст с шагами. На телефоне текст сверху, анимация снизу. Четыре этапа: пайка, соединение, кнопки, проверка.</p>
+        </div>
+        <a class="btn btn-primary btn-lg" href="instructions.html">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          Перейти к инструкции
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="scheme">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="section-num">04</span>
+        <span class="section-kicker">Схема</span>
+        <h2>Схема подключения</h2>
+        <p class="intro">Полная схема соединений всех модулей с платой ESP32-S3. Скачайте и держите рядом при пайке.</p>
+      </div>
+      <div class="scheme-card reveal d1">
+        <div class="scheme-info">
+          <span class="section-kicker">Файл для скачивания</span>
+          <h3>Распиновка ESP32-S3 и модулей</h3>
+          <p>На схеме отмечены все пины для каждого модуля: питание, земля, SPI, I²C. Скачайте PNG — можно распечатать или открыть на телефоне.</p>
+          <div class="scheme-actions">
+            <a class="btn btn-primary btn-lg" id="scheme-download" href="#" download="схема-подключения.png">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Скачать схему (PNG)
+            </a>
+            <button class="btn btn-ghost btn-lg" type="button" id="scheme-preview-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              Посмотреть
+            </button>
+          </div>
+        </div>
+        <div class="scheme-preview" id="scheme-preview">
+          <div class="scheme-preview-placeholder">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 9v12"/></svg>
+            <div>Схема подключения<br>скоро появится здесь</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="guide">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="section-num">05</span>
+        <span class="section-kicker">Руководство</span>
+        <h2>Что умеет Bruce</h2>
+        <p class="intro">Bruce — это мощная прошивка для ESP32 с десятками функций: от Wi-Fi анализа до работы с радиосигналами.</p>
+      </div>
+      <div class="guide-grid reveal d1">
+        <div class="guide-card"><div class="guide-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12.55a11 11 0 0 1 14.08 0"/></svg></div><h3>Wi-Fi</h3><p>Подключение к сетям, анализ, сканирование хостов, TelNet, SSH, Evil Portal, RAW Sniffer, Wardriving.</p></div>
+        <div class="guide-card"><div class="guide-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 7l5 5-5 5M17 7l-5 5 5 5"/></svg></div><h3>Bluetooth LE</h3><p>BLE Scan, Bad BLE, BLE-клавиатура, спам-режимы для iOS, Windows, Samsung, Android.</p></div>
+        <div class="guide-card"><div class="guide-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12h16M4 12l4-4M4 12l4 4M20 12l-4-4M20 12l-4 4"/></svg></div><h3>RF / Sub-GHz</h3><p>Сканирование и повтор передачи радиосигналов, работа с CC1101, анализ 433/868/915 МГц.</p></div>
+        <div class="guide-card"><div class="guide-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h10M7 12h10M7 17h6"/></svg></div><h3>RFID / NFC</h3><p>Чтение и запись меток, эмуляция карт, работа с PN532. Mifare, FeliCa, ISO14443.</p></div>
+        <div class="guide-card"><div class="guide-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2"/></svg></div><h3>Инфракрасный порт</h3><p>Приём и передача ИК-сигналов, TV-B-Gone, сохранение и повтор команд.</p></div>
+        <div class="guide-card"><div class="guide-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h12"/></svg></div><h3>BadUSB / HID</h3><p>Эмуляция клавиатуры через USB и BLE. Ducky-скрипты. Только ESP32-S3.</p></div>
+        <div class="guide-card"><div class="guide-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div><h3>JavaScript</h3><p>Встроенный интерпретатор MicroQuickJS. Свои приложения и скрипты.</p></div>
+        <div class="guide-card"><div class="guide-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div><h3>Настройки</h3><p>Яркость, звук, LED-эффекты, темы, InstaBoot, выбор стартового приложения.</p></div>
+      </div>
+      <div class="guide-btn-row reveal d2" style="margin-top:40px">
+        <button class="guide-btn" type="button" id="guide-btn-2">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          📖 Открыть полное руководство
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="faq">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="section-num">06</span>
+        <span class="section-kicker">Вопросы</span>
+        <h2>Частые вопросы</h2>
+        <p class="intro">Умный поиск: введите слово — найдём ответ даже по синониму.</p>
+      </div>
+      <div class="faq-search-wrap reveal d1">
+        <div class="faq-search">
+          <input type="text" class="faq-search-input" id="faq-search" placeholder="Поиск: паять, авито, прошивка, цена, схема…" aria-label="Поиск по вопросам" autocomplete="off">
+          <button class="faq-search-clear" id="faq-search-clear" type="button" aria-label="Очистить поиск">✕</button>
+          <svg class="faq-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        </div>
+      </div>
+      <div class="faq-suggest reveal d1" id="faq-suggest"><span class="faq-suggest-label">Популярное:</span></div>
+      <div class="faq-counter reveal d1" id="faq-counter" hidden>Найдено: <b><span id="faq-count">0</span></b></div>
+      <div class="faq reveal d2" id="faq-list"></div>
+      <div class="faq-empty" id="faq-empty">
+        <b>Ничего не найдено</b>
+        По запросу «<span id="faq-empty-q"></span>» нет результатов.
+        <p style="font-size:14px;color:var(--muted-2);margin-top:10px">Попробуйте: «паять», «доставка», «прошивка», «цена», «схема».</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="order">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="section-num">07</span>
+        <span class="section-kicker">Заказ</span>
+        <h2>Где заказать</h2>
+        <p class="intro">Оформление и оплата — через Авито: там работает защита покупателя и доставка в разные города.</p>
+      </div>
+      <div class="avito-card reveal d1">
+        <div class="avito-card-info">
+          <span class="avito-badge">АВИТО</span>
+          <h3>Заказать набор</h3>
+          <p>Нажмите кнопку — откроется наше объявление. Там можно задать вопрос, оформить доставку и оплатить.</p>
+          <span class="stock" id="stock-line" hidden>В наличии</span>
+        </div>
+        <a class="btn btn-avito btn-lg btn-pulse" id="avito-btn" href="#" target="_blank" rel="noopener noreferrer" hidden>Перейти на Авито</a>
+        <p id="avito-fallback" class="privacy" style="grid-column:1/-1;margin-top:0;">Ссылка на объявление появится здесь совсем скоро.</p>
+        <div class="avito-qr-block" id="avito-qr-block" hidden>
+          <img class="qr-img" id="avito-qr" alt="QR-код на Авито" loading="lazy">
+          <div class="qr-info">
+            <h4>Открыть на телефоне</h4>
+            <p>Наведите камеру телефона на QR-код — объявление откроется в приложении Авито.</p>
+          </div>
+        </div>
+      </div>
+      <p class="privacy reveal d2">Сайт ничего не собирает и не хранит. Подробнее о законности продажи — <a href="legal.html">на отдельной странице</a>.</p>
+    </div>
+  </section>
+
+  <section class="section" id="chat">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="section-num">08</span>
+        <span class="section-kicker">Связь</span>
+        <h2>Написать нам</h2>
+        <p class="intro">Заявка или вопрос — ответим в течение часа. Сообщение уйдёт нам в Telegram, там же и ответим.</p>
+      </div>
+
+      <form class="contact-form reveal d1" id="contact-form" autocomplete="on">
+        <div class="cf-row">
+          <label class="cf-field">
+            <span>Ваше имя (необязательно)</span>
+            <input type="text" name="name" maxlength="100" placeholder="Как к вам обращаться">
+          </label>
+          <label class="cf-field">
+            <span>Контакт (необязательно)</span>
+            <input type="text" name="contact" maxlength="200" placeholder="Telegram / телефон / email">
+          </label>
+        </div>
+
+        <label class="cf-field">
+          <span>Тема обращения</span>
+          <select name="type">
+            <option value="order">🛒 Заявка на заказ набора</option>
+            <option value="question">❓ Вопрос по набору</option>
+            <option value="help">🛠 Помощь со сборкой</option>
+            <option value="other">💬 Другое</option>
+          </select>
+        </label>
+
+        <label class="cf-field">
+          <span>Сообщение</span>
+          <textarea name="message" required maxlength="2000" rows="5" placeholder="Опишите, что вас интересует"></textarea>
+        </label>
+
+        <button type="submit" class="btn btn-primary btn-lg" id="contact-submit">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Отправить
+        </button>
+
+        <p class="cf-status" id="cf-status" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-inner">
+      <div class="foot-links">
+        <a id="foot-tg" href="#" target="_blank" rel="noopener noreferrer" hidden>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.06-.2s-.18-.04-.26-.02c-.11.02-1.84 1.17-5.2 3.44-.49.34-.94.5-1.34.49-.44-.01-1.29-.25-1.92-.46-.77-.25-1.38-.39-1.33-.82.02-.22.33-.45.92-.68 3.6-1.57 6-2.6 7.19-3.1 3.43-1.43 4.14-1.68 4.61-1.68.1 0 .33.02.48.14.12.1.16.24.17.34-.01.07.01.28 0 .35z"/></svg>
+          Telegram-канал
+        </a>
+        <a id="foot-gh" href="#" target="_blank" rel="noopener noreferrer" hidden>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.9 1.2 1.9 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.7.2 2.9.1 3.2a4.6 4.6 0 0 1 1.2 3.2c0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3"/></svg>
+          Официальный Bruce
+        </a>
+        <a href="legal.html">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Почему это законно
+        </a>
+        <a href="instructions.html">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          Инструкция по сборке
+        </a>
+        <a href="guide.html">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          Руководство Bruce
+        </a>
+      </div>
+      <p>© 2026 <span data-shop>DIY-Project</span>. Независимый магазин. Bruce — открытый проект своих авторов, мы с ними не связаны.</p>
+      <p>Набор предназначен для обучения и проверки собственного оборудования. Использование с чужими устройствами и сетями без разрешения владельца запрещено законом.</p>
+      <p>Заказы оформляются через Авито. Это превью-сайт набора.</p>
+    </div>
+  </div>
+</footer>
+
+<div class="cta-bar is-hidden" id="cta-bar"><a class="btn btn-avito" href="#order">Заказать на Авито</a></div>
+
+<button class="to-top" id="to-top" aria-label="Наверх" title="Наверх">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+</button>
+
+<div class="modal-backdrop" id="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <button class="modal-close" id="modal-close" aria-label="Закрыть">✕</button>
+    <div class="modal-visual" id="modal-visual"></div>
+    <h3 class="modal-title" id="modal-title"></h3>
+    <p class="modal-sub" id="modal-sub"></p>
+    <div class="modal-text" id="modal-text"></div>
+  </div>
+</div>
+
+<div class="guide-modal-backdrop" id="guide-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="guide-modal-title">
+  <div class="guide-modal">
+    <button class="modal-close" id="guide-modal-close" aria-label="Закрыть">✕</button>
+    <h2 id="guide-modal-title">Полное руководство по Bruce</h2>
+    <p class="intro">Bruce — мощная прошивка для ESP32 с десятками функций. Краткий справочник по разделам.</p>
+
+    <div class="guide-section">
+      <div class="guide-section-head"><span class="guide-section-num">Wi-Fi</span><h3>Беспроводные сети</h3></div>
+      <p class="guide-section-desc">Подключение к сетям, анализ трафика, сканирование хостов.</p>
+      <div class="guide-feature"><div class="guide-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12.55a11 11 0 0 1 14.08 0"/></svg></div><div class="guide-feature-body"><h4>Connect to WiFi</h4><p>Подключение к сети. Открывает TelNet, SSH, ARP Poisoning.</p></div></div>
+      <div class="guide-feature"><div class="guide-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></div><div class="guide-feature-body"><h4>Scan Hosts</h4><p>Сканирование сети, IP и MAC-адреса устройств.</p></div></div>
+      <div class="guide-feature"><div class="guide-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/></svg></div><div class="guide-feature-body"><h4>Evil Portal</h4><p>Фейковая страница входа для тестирования.</p></div></div>
+    </div>
+
+    <div class="guide-section">
+      <div class="guide-section-head"><span class="guide-section-num">BLE</span><h3>Bluetooth Low Energy</h3></div>
+      <p class="guide-section-desc">Сканирование, эмуляция, спам.</p>
+      <div class="guide-feature"><div class="guide-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/></svg></div><div class="guide-feature-body"><h4>BLE Scan</h4><p>Поиск Bluetooth-устройств рядом.</p></div></div>
+      <div class="guide-feature"><div class="guide-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="12" rx="2"/></svg></div><div class="guide-feature-body"><h4>Bad BLE</h4><p>Эмуляция BLE-клавиатуры, Ducky-скрипты.</p></div></div>
+    </div>
+
+    <div class="guide-section">
+      <div class="guide-section-head"><span class="guide-section-num">RF</span><h3>Sub-GHz через CC1101</h3></div>
+      <p class="guide-section-desc">300–928 МГц. Сканирование, запись, повтор.</p>
+      <div class="guide-feature"><div class="guide-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12h16"/></svg></div><div class="guide-feature-body"><h4>Scan / Copy</h4><p>Запись сигнала в файл .sub.</p></div></div>
+      <div class="guide-feature"><div class="guide-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="15" rx="2"/></svg></div><div class="guide-feature-body"><h4>TV-B-Gone</h4><p>Выключение телевизоров в радиусе.</p></div></div>
+    </div>
+
+    <div class="guide-section">
+      <div class="guide-section-head"><span class="guide-section-num">RFID</span><h3>NFC через PN532</h3></div>
+      <p class="guide-section-desc">13,56 МГц.</p>
+      <div class="guide-feature"><div class="guide-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div><div class="guide-feature-body"><h4>Read / Write / Emulate</h4><p>Чтение, запись и эмуляция карт.</p></div></div>
+    </div>
+
+    <div class="guide-section">
+      <div class="guide-section-head"><span class="guide-section-num">IR</span><h3>Инфракрасный порт</h3></div>
+      <p class="guide-section-desc">Приём и передача ИК.</p>
+      <div class="guide-feature"><div class="guide-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></div><div class="guide-feature-body"><h4>IR Read / IR Send</h4><p>Запись команды с пульта и её повтор.</p></div></div>
+    </div>
+
+    <div class="guide-section">
+      <div class="guide-section-head"><span class="guide-section-num">HID</span><h3>BadUSB</h3></div>
+      <p class="guide-section-desc">Эмуляция клавиатуры через USB и BLE.</p>
+      <div class="guide-feature"><div class="guide-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="12" rx="2"/></svg></div><div class="guide-feature-body"><h4>Ducky-скрипты</h4><p>Автоматизация ввода. Только ESP32-S3.</p></div></div>
+    </div>
+
+    <div class="guide-section">
+      <div class="guide-section-head"><span class="guide-section-num">JS</span><h3>JavaScript</h3></div>
+      <p class="guide-section-desc">Встроенный MicroQuickJS.</p>
+      <div class="guide-feature"><div class="guide-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div><div class="guide-feature-body"><h4>Скрипты</h4><p>Свои приложения на JS, GPIO API, WiFi / BLE API.</p></div></div>
+    </div>
+
+    <div class="guide-section">
+      <div class="guide-section-head"><span class="guide-section-num">WEB</span><h3>WebUI</h3></div>
+      <p class="guide-section-desc">Управление через браузер по Wi-Fi.</p>
+      <div class="guide-feature"><div class="guide-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/></svg></div><div class="guide-feature-body"><h4>File Manager</h4><p>Загрузка файлов на SD через браузер. Логин admin / bruce.</p></div></div>
+    </div>
+
+    <p style="margin-top:36px;padding-top:24px;border-top:1px solid var(--line-soft);color:var(--muted-2);font-size:14px">
+      Документация: <a href="https://github.com/pr3y/Bruce/wiki" target="_blank" rel="noopener noreferrer">github.com/pr3y/Bruce/wiki</a> · <a href="guide.html">Открыть полную страницу руководства</a>
+    </p>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var CONFIG = {
+    shopName: 'DIY-Project',
+    price: null,
+    currency: '₽',
+    github: 'https://github.com/pr3y/Bruce',
+    schemeImage: 'img/схема.png',
+    workerUrl: 'https://flat-river-376cdiy-project-bot.timyraxmetov1710.workers.dev'
+  };
+
+  var IMG = {
+    esp32:     ['img/ESP32-S3.webp'],
+    cc1101:    ['img/cc1101.png'],
+    display:   ['img/Дисплей 1,14.png'],
+    caps:      ['img/Конденсатор 100 мкФ.png'],
+    nrf24:     ['img/NRF24.png'],
+    pn532:     ['img/PN532 NFC.png'],
+    sd:        ['img/Модуль SD.png'],
+    headers:   ['img/Гребёнки 40 pin.png'],
+    wires:     ['img/Провода.png'],
+    perfboard: ['img/Плата для пайки.jpg'],
+    ir:        ['img/ИК-приёмник + передатчик.png'],
+    buttons:   ['img/Кнопки + колпачки.webp']
+  };
+
+  var HERO_IMAGES = {
+    'code':    ['img/hero-code.jpg', 'img/hero-code-2.jpg'],
+    'parts':   ['img/ESP32-S3.webp', 'img/cc1101.png', 'img/NRF24.png'],
+    'solder':  ['img/hero-solder.webp', 'img/Плата для пайки.jpg'],
+    'menu':    ['img/hero-menu.bmp', 'img/Дисплей 1,14.png'],
+    'modules': ['img/PN532 NFC.png', 'img/ИК-приёмник + передатчик.png'],
+    'final':   []
+  };
+
+  function $(id) { return document.getElementById(id); }
+  function clean(v, max) { return String(v == null ? '' : v).replace(/[\u0000-\u001F\u007F]+/g,' ').replace(/\s+/g,' ').trim().slice(0, max); }
+  function money(n) { var t; try { t = new Intl.NumberFormat('ru-RU').format(n); } catch (e) { t = String(n); } return t + ' ' + CONFIG.currency; }
+  function hasPrice() { return typeof CONFIG.price === 'number' && isFinite(CONFIG.price) && CONFIG.price > 0; }
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var isMobile = window.matchMedia('(max-width: 768px)').matches;
+
+  var shopName = clean(CONFIG.shopName, 40) || 'DIY-Project';
+  var ghUrl = clean(CONFIG.github, 300);
+  var workerUrl = clean(CONFIG.workerUrl, 500);
+
+  document.title = shopName + ' — набор для сборки Bruce на ESP32-S3';
+  Array.prototype.forEach.call(document.querySelectorAll('[data-shop]'), function (n) { n.textContent = shopName; });
+
+  (function theme() {
+    var html = document.documentElement;
+    var btn = $('theme-btn');
+    var meta = $('meta-theme');
+    function apply(mode) {
+      html.setAttribute('data-theme', mode);
+      try { localStorage.setItem('diy_theme', mode); } catch (e) {}
+      if (meta) meta.setAttribute('content', mode === 'light' ? '#f5f3ee' : '#07090d');
+      var sun = btn && btn.querySelector('.theme-sun');
+      var rays = btn && btn.querySelector('.theme-rays');
+      if (sun) sun.style.display = mode === 'light' ? 'none' : '';
+      if (rays) rays.style.display = mode === 'light' ? 'none' : '';
+    }
+    apply(html.getAttribute('data-theme') || 'dark');
+    if (btn) btn.addEventListener('click', function () {
+      apply(html.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+    });
+  })();
+
+  /* HERO ГАЛЕРЕЯ — на мобиле одна картинка без автопереключения */
+  (function heroGallery() {
+    Array.prototype.forEach.call(document.querySelectorAll('.hero-tile[data-hero]'), function (tile, idx) {
+      var key = tile.getAttribute('data-hero');
+      var list = (HERO_IMAGES[key] || []).filter(Boolean);
+      var holder = tile.querySelector('.hero-tile-imgs');
+      if (!holder) return;
+
+      var labelEl = tile.querySelector('.hero-tile-label');
+      var placeholder = document.createElement('div');
+      placeholder.className = 'hero-tile-fallback';
+      placeholder.textContent = labelEl ? labelEl.textContent : '';
+      holder.appendChild(placeholder);
+
+      if (!list.length) return;
+
+      var img = document.createElement('img');
+      img.alt = '';
+      img.decoding = 'async';
+      img.style.opacity = '0';
+      holder.appendChild(img);
+
+      var validSrcs = [];
+      var probed = 0;
+      function probeNext() {
+        if (probed >= list.length) return;
+        var src = list[probed++];
+        var test = new Image();
+        test.onload = function () {
+          validSrcs.push(src);
+          if (validSrcs.length === 1) {
+            img.src = src;
+            img.style.opacity = '1';
+            placeholder.classList.add('is-hidden');
+          }
+          probeNext();
+        };
+        test.onerror = probeNext;
+        test.src = src;
+      }
+      probeNext();
+
+      /* Автопереключение ТОЛЬКО на ПК */
+      if (list.length > 1 && !reduce && !isMobile) {
+        var current = 0;
+        window.setInterval(function () {
+          if (validSrcs.length < 2) return;
+          current = (current + 1) % validSrcs.length;
+          img.style.opacity = '0';
+          window.setTimeout(function () {
+            img.src = validSrcs[current];
+            img.style.opacity = '1';
+          }, 380);
+        }, 3000 + idx * 320);
+      }
+    });
+  })();
+
+  var COMPONENTS = [
+    { name:'ESP32-S3', sub:'Микроконтроллер · Wi-Fi · BLE', img:IMG.esp32, desc:'ESP32-S3 — двухъядерный микроконтроллер Xtensa LX7 до 240 МГц, Wi-Fi 2,4 ГГц, Bluetooth 5 (LE), 45 GPIO, USB-OTG. На этой плате уже залита прошивка Bruce под экран 1,14″.' },
+    { name:'Дисплей 1,14″', sub:'IPS-экран · 135×240 · SPI', img:IMG.display, desc:'IPS-экран 1,14 дюйма, разрешение 135×240, подключение по SPI. Выводы: GND, VCC, SCL, SDA, RES, DC, CS, BLK.' },
+    { name:'CC1101', sub:'Sub-GHz трансивер · 300–928 МГц', img:IMG.cc1101, desc:'CC1101 — радиотрансивер Texas Instruments для диапазонов ниже 1 ГГц. Версия 433 МГц со SMA-разъёмом и внешней антенной. Подключение по SPI.' },
+    { name:'NRF24', sub:'2,4 ГГц трансивер · 2400–2525 МГц', img:IMG.nrf24, desc:'NRF24L01+ с печатной антенной. Nordic Semiconductor, 2,4 ГГц. Обмен до 2 Мбит/с. Работает от 3,3 В. SPI.' },
+    { name:'PN532 NFC', sub:'NFC-модуль · 13,56 МГц', img:IMG.pn532, desc:'PN532 v3 — NFC-контроллер NXP. Красная плата Elechouse HW-147. Mifare, FeliCa, ISO14443A/B. Режимы HSU/I²C/SPI.' },
+    { name:'ИК-приёмник / передатчик', sub:'38 кГц приём · ~940 нм передача', img:IMG.ir, desc:'TSOP1838 (38 кГц) и передающий светодиод ~940 нм. Приём от пультов, отправка команд бытовой технике.' },
+    { name:'Модуль SD', sub:'Чтение microSD · SPI', img:IMG.sd, desc:'Модуль для microSD. SPI, 3,3 В. Выводы: CS, SCK, MOSI, MISO, VCC, GND. Сохранение логов и файлов Bruce.' },
+    { name:'Конденсатор 100 мкФ', sub:'Полярный · 25 В · электролит', img:IMG.caps, desc:'Электролит 100 мкФ 25 В. Ставится рядом с питанием радиомодулей. Полярность: плюс к питанию, минус к земле.' },
+    { name:'Разъёмы-гребёнки', sub:'3 шт × 40 pin · 2,54 мм', img:IMG.headers, desc:'Три гребёнки 40 pin. Одна под ESP32-S3, остальные под модули. Можно отломить нужную длину.' },
+    { name:'Провода-перемычки', sub:'30 красных + 30 чёрных', img:IMG.wires, desc:'60 проводов: 30 красных (питание) + 30 чёрных (земля). Залуженные концы, длина ~10 см.' },
+    { name:'Макетная плата', sub:'60 × 80 мм · FR-4 · 2,54 мм', img:IMG.perfboard, desc:'Перфорированная плата 60 × 80 мм из FR-4. Шаг 2,54 мм, медные кольца. Все 12 модулей размещаются с запасом.' },
+    { name:'Кнопки + колпачки', sub:'6 тактовых · 4 цвета колпачков', img:IMG.buttons, desc:'6 тактовых кнопок 12×12 мм. 5 рабочих + 1 запасная. 8 силиконовых колпачков 4 цветов.' }
+  ];
+
+  function loadImageWithFallbacks(imgEl, paths, onAllFail) {
+    var i = 0;
+    function tryNext() {
+      if (i >= paths.length) { if (onAllFail) onAllFail(); return; }
+      imgEl.src = paths[i];
+      i++;
+    }
+    imgEl.addEventListener('error', tryNext);
+    tryNext();
+  }
+
+  (function gate() {
+    var gateEl = $('gate'); if (!gateEl) return;
+    if (gateEl.classList.contains('is-hidden')) { document.body.style.overflow = ''; return; }
+    var start = $('gate-start');
+    if (start) {
+      start.addEventListener('click', function () {
+        try { sessionStorage.setItem('diy_entered','1'); } catch (e) {}
+        document.body.style.overflow = '';
+        gateEl.classList.add('is-hidden');
+        window.setTimeout(function () { gateEl.setAttribute('hidden',''); }, 650);
+      });
+      start.focus({ preventScroll: true });
+    }
+  })();
+
+  (function scrollFx() {
+    if (isMobile) return; /* На мобиле прогресс-бар отключён */
+    var prog = $('progress'), ticking = false;
+    function update() {
+      ticking = false;
+      var h = document.documentElement, max = h.scrollHeight - h.clientHeight;
+      if (prog) prog.style.transform = 'scaleX(' + (max > 0 ? Math.min(1, h.scrollTop / max) : 0) + ')';
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(update); }
+    }, { passive: true });
+    update();
+  })();
+
+  (function toTop() {
+    var btn = $('to-top'); if (!btn) return;
+    var ticking = false;
+    function update() {
+      ticking = false;
+      var y = window.scrollY || document.documentElement.scrollTop;
+      btn.classList.toggle('is-visible', y > window.innerHeight * 1.5);
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(update); }
+    }, { passive: true });
+    btn.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); });
+    update();
+  })();
+
+  (function burger() {
+    var btn = $('burger'), menu = $('m-menu');
+    if (!btn || !menu) return;
+    function close() { menu.classList.remove('is-open'); btn.setAttribute('aria-expanded','false'); }
+    btn.addEventListener('click', function () {
+      var open = menu.classList.toggle('is-open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    Array.prototype.forEach.call(menu.querySelectorAll('a'), function (a) { a.addEventListener('click', close); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  })();
+
+  (function renderComponents() {
+    var grid = $('components-grid'); if (!grid) return;
+    COMPONENTS.forEach(function (c, i) {
+      var btn = document.createElement('button');
+      btn.type = 'button'; btn.className = 'comp-btn'; btn.setAttribute('aria-label','Подробнее: ' + c.name);
+      var visual = document.createElement('div'); visual.className = 'comp-btn-visual';
+      var idx = document.createElement('span'); idx.className = 'comp-btn-idx'; idx.textContent = (i + 1 < 10 ? '0' + (i + 1) : i + 1);
+      visual.appendChild(idx);
+      var img = document.createElement('img'); img.alt = c.name; img.loading = 'lazy';
+      loadImageWithFallbacks(img, c.img, function () {
+        if (img.parentNode) img.parentNode.removeChild(img);
+        visual.style.background = 'linear-gradient(135deg,#0d1620,#0a1119)';
+        var t = document.createElement('div');
+        t.style.cssText = 'position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-family:var(--font-mono);font-size:11px;text-align:center;padding:16px';
+        t.textContent = 'Нет фото'; visual.appendChild(t);
+      });
+      visual.appendChild(img);
+      var body = document.createElement('div'); body.className = 'comp-btn-body';
+      var name = document.createElement('div'); name.className = 'comp-btn-name'; name.textContent = c.name;
+      var desc = document.createElement('div'); desc.className = 'comp-btn-desc'; desc.textContent = c.sub;
+      var hint = document.createElement('div'); hint.className = 'comp-btn-hint'; hint.textContent = 'Подробнее →';
+      body.appendChild(name); body.appendChild(desc); body.appendChild(hint);
+      btn.appendChild(visual); btn.appendChild(body);
+      btn.addEventListener('click', function () { openModal(c); });
+      grid.appendChild(btn);
+    });
+  })();
+
+  var modalBackdrop = $('modal-backdrop'), lastFocused = null;
+  function openModal(c) {
+    lastFocused = document.activeElement;
+    $('modal-title').textContent = c.name; $('modal-sub').textContent = c.sub;
+    var vis = $('modal-visual'); vis.innerHTML = ''; vis.style.background = '#fff';
+    var img = document.createElement('img'); img.alt = c.name;
+    loadImageWithFallbacks(img, c.img, function () {
+      if (img.parentNode) img.parentNode.removeChild(img);
+      vis.style.background = 'linear-gradient(135deg,#0d1620,#0a1119)';
+      var t = document.createElement('div');
+      t.style.cssText = 'color:var(--muted);font-family:var(--font-mono);font-size:12px;text-align:center;padding:40px 20px';
+      t.textContent = 'Нет фото'; vis.appendChild(t);
+    });
+    vis.appendChild(img);
+    $('modal-text').innerHTML = '<p>' + c.desc + '</p>';
+    modalBackdrop.classList.add('is-open'); document.body.style.overflow = 'hidden'; $('modal-close').focus();
+  }
+  function closeModal() {
+    modalBackdrop.classList.remove('is-open'); document.body.style.overflow = '';
+    if (lastFocused && lastFocused.focus) lastFocused.focus();
+  }
+  if (modalBackdrop) {
+    $('modal-close').addEventListener('click', closeModal);
+    modalBackdrop.addEventListener('click', function (e) { if (e.target === modalBackdrop) closeModal(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && modalBackdrop.classList.contains('is-open')) closeModal(); });
+  }
+
+  var guideBackdrop = $('guide-modal-backdrop');
+  function openGuide() { guideBackdrop.classList.add('is-open'); document.body.style.overflow = 'hidden'; $('guide-modal-close').focus(); }
+  function closeGuide() { guideBackdrop.classList.remove('is-open'); document.body.style.overflow = ''; }
+  if (guideBackdrop) {
+    $('guide-modal-close').addEventListener('click', closeGuide);
+    guideBackdrop.addEventListener('click', function (e) { if (e.target === guideBackdrop) closeGuide(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && guideBackdrop.classList.contains('is-open')) closeGuide(); });
+  }
+  ['guide-btn-1','guide-btn-2','hero-guide-btn'].forEach(function (id) {
+    var el = $(id); if (el) el.addEventListener('click', openGuide);
+  });
+
+  var FAQ = [
+    { q:'Нужно ли самому прошивать плату?', a:'Нет. Плата ESP32-S3 в наборе уже прошита. Мы сделали версию Bruce под экран 1,14″ и записали её на каждую плату.', k:'прошивка прошить залить firmware bruce bin esptool flash' },
+    { q:'Нужно ли паять?', a:'Да. В наборе идёт перфорированная плата 60×80 мм для пайки, модули припаиваются к ней. Паяльник и припой понадобятся свои.', k:'паять паяльник припой пайка solder' },
+    { q:'Это официальный продукт проекта Bruce?', a:'Нет. Мы независимый магазин. Bruce — открытый проект своих авторов, мы с ними не связаны. Репозиторий на GitHub.', k:'официальный bruce проект автор github репозиторий магазин' },
+    { q:'Законно ли пользоваться набором?', a:'Для обучения и проверки своего оборудования — да. Работа с чужими сетями и устройствами без разрешения запрещена законом. Подробнее — на странице «Законность».', k:'законно легально закон разрешено legal ответственность' },
+    { q:'Как проходит оплата и доставка?', a:'Через Авито: защита покупателя, доставка по России, отзывы. Кнопка «Заказать на Авито» ведёт на объявление.', k:'оплата доставка авито купить заказ сдэк почта' },
+    { q:'Сколько времени занимает сборка?', a:'Около 2 часов. Модули припаиваются к плате, прошивка уже на ESP32-S3.', k:'сроки время сколько часов сборка собрать' },
+    { q:'Как пользоваться Bruce?', a:'Меню на дисплее, навигация — 5 кнопок. Функции: Wi-Fi, BLE, RF/Sub-GHz, RFID/NFC, ИК, BadUSB, JavaScript.', k:'bruce функции меню как пользоваться управление' },
+    { q:'Что делать, если что-то не работает?', a:'Напишите в Telegram — поможем. Часто причина в полярности, непропае или перепутанных пинах.', k:'не работает проблема ошибка поломка помощь troubleshooting' },
+    { q:'Какой размер макетной платы?', a:'60 × 80 мм из FR-4. Шаг 2,54 мм, все 12 модулей размещаются с запасом.', k:'макетная плата размер 60х80 60 80 fr-4' },
+    { q:'Есть ли гарантия?', a:'Да, 14 дней на проверку. Если что-то не работает — заменим или вернём деньги.', k:'гарантия возврат обмен качество' }
+  ];
+  var POPULAR_QUERIES = ['паять','прошивка','доставка','гарантия','сборка','схема'];
+
+  (function faqSection() {
+    var list = $('faq-list'); if (!list) return;
+    var searchInput = $('faq-search'); var clearBtn = $('faq-search-clear');
+    var counter = $('faq-counter'); var countEl = $('faq-count');
+    var empty = $('faq-empty'); var emptyQ = $('faq-empty-q');
+    var suggestWrap = $('faq-suggest');
+
+    FAQ.forEach(function (item) {
+      var d = document.createElement('details');
+      d.setAttribute('data-keywords', (item.k || '') + ' ' + item.q.toLowerCase() + ' ' + item.a.toLowerCase());
+      var s = document.createElement('summary'); s.textContent = item.q;
+      var p = document.createElement('p'); p.textContent = item.a;
+      d.appendChild(s); d.appendChild(p); list.appendChild(d);
+    });
+
+    if (suggestWrap) {
+      POPULAR_QUERIES.forEach(function (q) {
+        var b = document.createElement('button');
+        b.type = 'button'; b.className = 'faq-suggest-btn'; b.textContent = q;
+        b.addEventListener('click', function () { searchInput.value = q; filter(q); searchInput.focus(); });
+        suggestWrap.appendChild(b);
+      });
+    }
+
+    var allItems = Array.prototype.slice.call(list.querySelectorAll('details'));
+    function normalize(s){ return String(s||'').toLowerCase().replace(/ё/g,'е').replace(/[^а-яa-z0-9\s]/g,' ').replace(/\s+/g,' ').trim(); }
+    function lev(a,b){ if(Math.abs(a.length-b.length)>2) return 99; var m=a.length,n=b.length; if(!m) return n; if(!n) return m; var p=new Array(n+1),c=new Array(n+1); for(var j=0;j<=n;j++) p[j]=j; for(var i=1;i<=m;i++){c[0]=i; for(var j2=1;j2<=n;j2++){var cost=a[i-1]===b[j2-1]?0:1; c[j2]=Math.min(c[j2-1]+1,p[j2]+1,p[j2-1]+cost);} var t=p;p=c;c=t;} return p[n]; }
+    function close(a,b){ if(a===b) return true; if(a.length>=4 && b.indexOf(a)!==-1) return true; if(b.length>=4 && a.indexOf(b)!==-1) return true; var d=lev(a,b); var m=a.length<=5?1:a.length<=8?1:2; return d<=m; }
+    function matches(item,q){ if(!q) return true; var text=normalize(item.getAttribute('data-keywords')||item.textContent); var tw=text.split(' '); var qw=normalize(q).split(' ').filter(function(w){return w.length>0;}); if(!qw.length) return true; return qw.every(function(w){ return tw.some(function(t){ return close(w,t); }); }); }
+    function filter(q){ q=(q||'').trim(); var v=0; allItems.forEach(function(it){ var m=matches(it,q); it.classList.toggle('is-hidden',!m); if(m){ v++; if(!q) it.removeAttribute('open'); } }); if(q){ counter.hidden=false; countEl.textContent=v; } else { counter.hidden=true; } empty.classList.toggle('is-visible', v===0 && q.length>0); if(emptyQ) emptyQ.textContent=q; clearBtn.classList.toggle('is-visible', q.length>0); }
+    searchInput.addEventListener('input', function(){ filter(searchInput.value); });
+    searchInput.addEventListener('keydown', function(e){ if(e.key==='Escape'){ searchInput.value=''; filter(''); searchInput.blur(); } });
+    clearBtn.addEventListener('click', function(){ searchInput.value=''; filter(''); searchInput.focus(); });
+  })();
+
+  (function scheme() {
+    var preview = $('scheme-preview'), src = clean(CONFIG.schemeImage, 300), dlBtn = $('scheme-download');
+    if (!preview || !src) return;
+    if (dlBtn) dlBtn.href = src;
+    var img = document.createElement('img'); img.alt = 'Схема подключения'; img.src = src;
+    img.addEventListener('load', function () { preview.innerHTML = ''; preview.appendChild(img); });
+  })();
+
+  var heroPrice = $('hero-price');
+  if (hasPrice() && heroPrice) {
+    heroPrice.appendChild(document.createTextNode('Цена набора: '));
+    var strong = document.createElement('strong'); strong.textContent = money(CONFIG.price);
+    heroPrice.appendChild(strong); heroPrice.hidden = false;
+  }
+
+  (function remoteConfig() {
+    if (!workerUrl) return;
+
+    function applyConfig(cfg) {
+      var stockNum = $('stock-indicator');
+      if (stockNum) {
+        if (cfg.inStock) {
+          stockNum.textContent = 'В наличии';
+          stockNum.classList.add('is-ok');
+          stockNum.classList.remove('is-no');
+        } else {
+          stockNum.textContent = 'Нет в наличии';
+          stockNum.classList.add('is-no');
+          stockNum.classList.remove('is-ok');
+        }
+      }
+
+      var stockLine = $('stock-line');
+      if (stockLine) {
+        stockLine.hidden = false;
+        if (cfg.inStock) {
+          stockLine.textContent = 'В наличии';
+          stockLine.classList.remove('is-no');
+        } else {
+          stockLine.textContent = 'Нет в наличии';
+          stockLine.classList.add('is-no');
+        }
+      }
+
+      var avitoBtn = $('avito-btn');
+      var fallback = $('avito-fallback');
+      var qrBlock = $('avito-qr-block');
+      var qrImg = $('avito-qr');
+
+      if (cfg.avitoUrl) {
+        if (avitoBtn) {
+          if (avitoBtn.href !== cfg.avitoUrl) avitoBtn.href = cfg.avitoUrl;
+          avitoBtn.hidden = false;
+        }
+        if (fallback) fallback.hidden = true;
+        if (qrBlock && qrImg) {
+          var expected = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=0&data=' + encodeURIComponent(cfg.avitoUrl);
+          if (qrImg.src !== expected) qrImg.src = expected;
+          qrBlock.hidden = false;
+        }
+      } else {
+        if (avitoBtn) avitoBtn.hidden = true;
+        if (fallback) fallback.hidden = false;
+        if (qrBlock) qrBlock.hidden = true;
+      }
+
+      if (cfg.telegram) {
+        var footTg = $('foot-tg');
+        if (footTg) {
+          if (footTg.href !== cfg.telegram) footTg.href = cfg.telegram;
+          footTg.hidden = false;
+        }
+      }
+    }
+
+    function refresh() {
+      fetch(workerUrl, { method: 'GET', cache: 'no-store' })
+        .then(function (r) { return r.json(); })
+        .then(applyConfig)
+        .catch(function () {});
+    }
+
+    refresh();
+    window.setInterval(refresh, 30000);
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) refresh();
+    });
+
+    if (ghUrl) { var footGh = $('foot-gh'); if (footGh) { footGh.href = ghUrl; footGh.hidden = false; } }
+  })();
+
+  (function ctaBar() {
+    var bar = $('cta-bar'), order = $('order');
+    if (!bar || !order || !('IntersectionObserver' in window)) return;
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { bar.classList.toggle('is-hidden', e.isIntersecting); });
+    }, { threshold: .15 });
+    io.observe(order);
+  })();
+
+  (function reveals() {
+    var nodes = document.querySelectorAll('.reveal');
+    if (!nodes.length) return;
+    if (reduce || !('IntersectionObserver' in window)) {
+      Array.prototype.forEach.call(nodes, function (n) { n.classList.add('is-in'); }); return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); } });
+    }, { threshold: .12, rootMargin: '0px 0px -60px 0px' });
+    Array.prototype.forEach.call(nodes, function (n) { io.observe(n); });
+  })();
+
+  (function contactForm() {
+    var form = $('contact-form');
+    if (!form) return;
+    var status = $('cf-status');
+    var btn = $('contact-submit');
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (btn.disabled) return;
+      btn.disabled = true;
+      status.className = 'cf-status';
+      status.textContent = 'Отправляем...';
+
+      var payload = {
+        type: form.type.value,
+        name: form.name.value.trim(),
+        contact: form.contact.value.trim(),
+        message: form.message.value.trim(),
+      };
+
+      fetch(workerUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (data.ok) {
+            status.className = 'cf-status is-ok';
+            status.textContent = '✅ Отправлено! Мы свяжемся с вами.';
+            form.reset();
+          } else {
+            throw new Error(data.error || 'server error');
+          }
+        })
+        .catch(function () {
+          status.className = 'cf-status is-error';
+          status.textContent = '❌ Не удалось отправить. Попробуйте ещё раз.';
+        })
+        .then(function () { btn.disabled = false; });
+    });
+  })();
+
+})();
+</script>
+</body>
+</html>

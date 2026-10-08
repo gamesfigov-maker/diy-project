@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07090d" id="meta-theme">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<title>Руководство по Bruce — DIY-Project</title>
+<meta name="description" content="Полное руководство по прошивке Bruce для ESP32-S3: Wi-Fi, Bluetooth LE, RF, RFID/NFC, ИК, BadUSB, JavaScript, WebUI и настройки.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Unbounded:wght@600;700;800&display=swap">
+<script>try{var t=localStorage.getItem('diy_theme')||'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
+<style>
+:root{
+  --bg:#07090d;--bg-2:#0a0d13;--surface:#0f151d;--surface-2:#141b25;--surface-3:#1a2430;
+  --glass:rgba(20,27,37,.72);--glass-brd:rgba(255,255,255,.06);
+  --line:#222e3b;--line-soft:#1a232e;
+  --fg:#eef4fa;--muted:#8a9cae;--muted-2:#5f7183;
+  --accent:#ffb347;--accent-2:#ffd27a;--accent-ink:#1b1204;
+  --ok:#4fd1a1;--avito:#00aaff;
+  --font-display:'Unbounded',system-ui,sans-serif;
+  --font-body:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  --ease:cubic-bezier(.22,.61,.36,1);--ease-spring:cubic-bezier(.34,1.4,.5,1);
+  color-scheme:dark;
+}
+[data-theme="light"]{
+  --bg:#f6f4ef;--bg-2:#fbfaf6;--surface:#fff;--surface-2:#f7f5ef;--surface-3:#ece7db;
+  --glass:rgba(255,255,255,.72);--glass-brd:rgba(0,0,0,.05);
+  --line:#ded7c8;--line-soft:#ebe6d9;--fg:#141921;--muted:#5c6673;--muted-2:#8b95a0;
+  --accent:#c9761a;--accent-2:#e89b3a;--accent-ink:#fff;--ok:#0d8f66;--avito:#0088cc;
+  color-scheme:light;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:100px}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:17px;line-height:1.7;-webkit-text-size-adjust:100%;overflow-x:hidden;transition:background-color .4s var(--ease),color .4s var(--ease)}
+body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;background:
+  radial-gradient(1000px 520px at 85% -5%,rgba(0,170,255,.09),transparent 60%),
+  radial-gradient(800px 460px at -10% 30%,rgba(255,179,71,.08),transparent 60%),
+  radial-gradient(700px 440px at 60% 105%,rgba(79,209,161,.06),transparent 60%),
+  linear-gradient(180deg,var(--bg) 0%,var(--bg-2) 100%)}
+[data-theme="light"] body::before{opacity:.5}
+.wrap{width:100%;max-width:1260px;margin-inline:auto;padding-inline:clamp(20px,4vw,40px)}
+a{color:var(--accent);text-underline-offset:3px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;line-height:1.15;margin:0;letter-spacing:-.02em}
+p{margin:0}
+::selection{background:rgba(255,179,71,.4);color:var(--fg)}
+::-webkit-scrollbar{width:11px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--line),var(--surface-3));border-radius:6px;border:2px solid var(--bg)}
+img{max-width:100%;display:block}
+
+.progress{position:fixed;top:0;left:0;right:0;height:2px;z-index:60;background:linear-gradient(90deg,var(--accent),var(--avito),var(--ok));transform-origin:left;transform:scaleX(0);will-change:transform}
+.noise{position:fixed;inset:0;z-index:3;pointer-events:none;opacity:.05;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");mix-blend-mode:overlay}
+[data-theme="light"] .noise{opacity:.03}
+
+.bar{position:sticky;top:0;z-index:50;background:var(--glass);backdrop-filter:blur(18px) saturate(1.5);border-bottom:1px solid var(--glass-brd)}
+.bar-inner{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:72px}
+.brand{display:inline-flex;align-items:center;gap:12px;font-family:var(--font-display);font-weight:700;font-size:17px;color:var(--fg);text-decoration:none;white-space:nowrap}
+.brand-chip{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,rgba(255,179,71,.15),rgba(255,179,71,.04));border:1px solid rgba(255,179,71,.35)}
+.nav{display:flex;align-items:center;gap:20px}
+.nav a.link{color:var(--muted);text-decoration:none;font-size:15px;transition:color .2s;padding:6px 0;position:relative}
+.nav a.link::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent-2));transform:scaleX(0);transform-origin:left;transition:transform .25s}
+.nav a.link:hover{color:var(--fg)}
+.nav a.link:hover::after{transform:scaleX(1)}
+.nav a.link.is-active{color:var(--fg)}
+.nav a.link.is-active::after{transform:scaleX(1)}
+.theme-btn{width:42px;height:42px;padding:0;border:1px solid var(--line);border-radius:12px;background:var(--surface-2);color:var(--muted);cursor:pointer;display:grid;place-items:center;transition:border-color .25s,color .25s,transform .4s var(--ease-spring)}
+.theme-btn:hover{border-color:var(--accent);color:var(--accent);transform:rotate(20deg)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:0 22px;font:600 15px/1 var(--font-body);border-radius:11px;border:1px solid var(--line);background:transparent;color:var(--fg);text-decoration:none;cursor:pointer;transition:all .25s var(--ease)}
+.btn:hover{border-color:var(--muted);transform:translateY(-2px)}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));border-color:var(--accent);color:var(--accent-ink)}
+.btn-primary:hover{filter:brightness(1.06)}
+.btn-sm{min-height:42px;padding:0 16px;font-size:14px}
+@media(max-width:900px){.nav a.link{display:none}}
+
+/* HERO */
+.hero{padding-block:clamp(56px,8vw,110px) clamp(40px,6vw,72px);position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);background-size:52px 52px;-webkit-mask-image:radial-gradient(ellipse at 50% 50%,#000 25%,transparent 75%);mask-image:radial-gradient(ellipse at 50% 50%,#000 25%,transparent 75%)}
+[data-theme="light"] .hero::before{background-image:linear-gradient(rgba(0,0,0,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.045) 1px,transparent 1px)}
+.hero-inner{position:relative;z-index:1;max-width:820px}
+.crumbs{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:12px;color:var(--muted-2);letter-spacing:.06em;margin-bottom:22px}
+.crumbs a{color:var(--muted);text-decoration:none;transition:color .2s}
+.crumbs a:hover{color:var(--accent)}
+.kicker{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-mono);font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--accent);margin-bottom:16px}
+.kicker svg{flex:none}
+.hero h1{font-size:clamp(34px,5vw,58px);letter-spacing:-.03em;font-weight:800;margin-bottom:22px}
+.hero h1 .accent{background:linear-gradient(100deg,var(--accent),var(--accent-2) 45%,var(--ok));background-clip:text;-webkit-background-clip:text;color:transparent}
+.hero .lead{font-size:clamp(16px,1.5vw,19px);color:var(--muted);max-width:60ch}
+.hero-meta{display:flex;flex-wrap:wrap;gap:14px;margin-top:28px;font-family:var(--font-mono);font-size:13px;color:var(--muted-2)}
+.hero-meta span{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2)}
+
+/* DOC LAYOUT */
+.doc{display:grid;grid-template-columns:260px minmax(0,1fr);gap:56px;padding-block:40px 96px;align-items:start}
+.toc{position:sticky;top:100px;padding:24px;border:1px solid var(--line);border-radius:20px;background:var(--surface);max-height:calc(100vh - 120px);overflow-y:auto}
+.toc-title{font-family:var(--font-mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted-2);margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--line-soft)}
+.toc ul{list-style:none;padding:0;margin:0;display:grid;gap:4px}
+.toc a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;color:var(--muted);text-decoration:none;font-size:14.5px;transition:all .2s var(--ease);border-left:2px solid transparent}
+.toc a:hover{background:var(--surface-2);color:var(--fg)}
+.toc a .toc-num{font-family:var(--font-mono);font-size:11px;color:var(--muted-2);min-width:20px;transition:color .2s}
+.toc a:hover .toc-num{color:var(--accent)}
+.toc a.is-active{background:rgba(255,179,71,.08);color:var(--accent);border-left-color:var(--accent);padding-left:10px}
+.toc a.is-active .toc-num{color:var(--accent)}
+.content{max-width:820px;min-width:0}
+.content > section{margin-bottom:80px;scroll-margin-top:100px}
+.content > section:last-child{margin-bottom:0}
+.section-head{display:flex;align-items:center;gap:16px;margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid var(--line-soft)}
+.section-icon{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,rgba(255,179,71,.14),rgba(255,179,71,.04));border:1px solid rgba(255,179,71,.25);display:grid;place-items:center;color:var(--accent);flex:none}
+.section-icon svg{width:22px;height:22px}
+.section-head h2{font-size:clamp(24px,3vw,32px);letter-spacing:-.02em}
+.section-head small{display:block;font-family:var(--font-mono);font-size:12px;color:var(--muted-2);letter-spacing:.14em;text-transform:uppercase;margin-top:4px;font-weight:400}
+.section-desc{color:var(--muted);font-size:16.5px;margin-bottom:26px;max-width:64ch}
+
+.feature{display:flex;gap:16px;padding:20px 0;border-bottom:1px solid var(--line-soft)}
+.feature:last-child{border-bottom:0}
+.feature-icon{flex:none;width:40px;height:40px;border-radius:11px;background:var(--surface-2);border:1px solid var(--line);display:grid;place-items:center;color:var(--accent)}
+.feature-icon svg{width:20px;height:20px}
+.feature-body{flex:1;min-width:0}
+.feature-body h4{font-family:var(--font-body);font-size:16px;font-weight:600;margin-bottom:6px;color:var(--fg)}
+.feature-body p{font-size:14.5px;color:var(--muted);line-height:1.7}
+.feature-body ul{margin:8px 0 0;padding-left:20px;color:var(--muted);font-size:14px;line-height:1.8}
+.feature-body li{margin-bottom:4px}
+.feature-tag{display:inline-block;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ok);background:rgba(79,209,161,.1);border:1px solid rgba(79,209,161,.25);padding:2px 8px;border-radius:5px;margin-left:8px;vertical-align:2px}
+
+.callout{padding:20px 24px;border-left:3px solid var(--accent);border-radius:10px;background:linear-gradient(90deg,rgba(255,179,71,.06),transparent);margin:20px 0;font-size:15px;color:var(--muted);line-height:1.7}
+.callout strong{color:var(--fg);font-weight:600}
+.callout.warn{border-left-color:#ffcc4d;background:linear-gradient(90deg,rgba(255,204,77,.08),transparent)}
+.callout.ok{border-left-color:var(--ok);background:linear-gradient(90deg,rgba(79,209,161,.08),transparent)}
+
+.foot{border-top:1px solid var(--line-soft);padding-block:40px 72px;color:var(--muted);font-size:14px}
+.foot-inner{display:grid;gap:12px;max-width:820px}
+.foot-links{display:flex;flex-wrap:wrap;gap:10px 22px}
+.foot-inner a{color:var(--muted);text-decoration:none;transition:color .2s}
+.foot-inner a:hover{color:var(--fg)}
+
+@media(max-width:960px){
+  .doc{grid-template-columns:1fr;gap:32px}
+  .toc{position:static;max-height:none;padding:20px}
+  .toc ul{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div class="progress" id="progress" aria-hidden="true"></div>
+<div class="noise" aria-hidden="true"></div>
+
+<header class="bar">
+  <div class="wrap bar-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-chip" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 26 26" fill="none"><rect x="2" y="2" width="22" height="22" rx="4" stroke="#ffb347" stroke-width="2"/><path d="M7 9h12M7 13h12M7 17h7" stroke="#ffb347" stroke-width="2" stroke-linecap="round"/></svg></span>
+      <span>DIY-Project</span>
+    </a>
+    <nav class="nav" aria-label="Разделы">
+      <a class="link" href="index.html#parts">Состав</a>
+      <a class="link" href="index.html#compare">Почему мы</a>
+      <a class="link" href="instructions.html">Инструкция</a>
+      <a class="link" href="index.html#scheme">Схема</a>
+      <a class="link is-active" href="guide.html" aria-current="page">Руководство</a>
+      <a class="link" href="index.html#faq">Вопросы</a>
+      <a class="link" href="legal.html">Законность</a>
+      <button class="theme-btn" id="theme-btn" aria-label="Сменить тему" title="Сменить тему">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="4" class="theme-sun"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" class="theme-rays"/></svg>
+      </button>
+      <a class="btn btn-primary btn-sm" href="index.html#order">Заказать</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap hero-inner">
+      <div class="crumbs">
+        <a href="index.html">Главная</a>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        <span>Руководство по Bruce</span>
+      </div>
+      <span class="kicker">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        Полное руководство
+      </span>
+      <h1>Что умеет <span class="accent">Bruce</span></h1>
+      <p class="lead">Bruce — мощная прошивка для ESP32-S3 с десятками функций: от Wi-Fi анализа до работы с радиосигналами. Здесь описано всё, что доступно в меню устройства.</p>
+      <div class="hero-meta">
+        <span>Bruce 1.5.1</span>
+        <span>ESP32-S3</span>
+        <span>9 разделов</span>
+        <span>35+ функций</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap doc">
+    <aside class="toc" aria-label="Оглавление">
+      <div class="toc-title">Оглавление</div>
+      <ul id="toc-list">
+        <li><a href="#wifi"><span class="toc-num">01</span>Wi-Fi</a></li>
+        <li><a href="#ble"><span class="toc-num">02</span>Bluetooth LE</a></li>
+        <li><a href="#rf"><span class="toc-num">03</span>RF / Sub-GHz</a></li>
+        <li><a href="#rfid"><span class="toc-num">04</span>RFID / NFC</a></li>
+        <li><a href="#ir"><span class="toc-num">05</span>Инфракрасный порт</a></li>
+        <li><a href="#usb"><span class="toc-num">06</span>BadUSB / HID</a></li>
+        <li><a href="#js"><span class="toc-num">07</span>JavaScript</a></li>
+        <li><a href="#webui"><span class="toc-num">08</span>WebUI</a></li>
+        <li><a href="#settings"><span class="toc-num">09</span>Настройки</a></li>
+      </ul>
+    </aside>
+
+    <div class="content">
+
+      <section id="wifi">
+        <div class="section-head">
+          <div class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg></div>
+          <div>
+            <h2>Wi-Fi</h2>
+            <small>Беспроводные сети · 2,4 ГГц</small>
+          </div>
+        </div>
+        <p class="section-desc">Подключение к Wi-Fi сетям, анализ эфира и работа с сетевыми протоколами. Требуется подключение к сети или режим точки доступа.</p>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/></svg></div>
+          <div class="feature-body">
+            <h4>Connect to WiFi</h4>
+            <p>Подключение к выбранной сети. Открывает доступ к сетевым функциям — TelNet, SSH, TCP Listener, ARP Poisoning.</p>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="10"/></svg></div>
+          <div class="feature-body">
+            <h4>WiFi AP</h4>
+            <p>Устройство создаёт собственную точку доступа. К ней могут подключаться телефоны и компьютеры.</p>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></div>
+          <div class="feature-body">
+            <h4>Scan Hosts</h4>
+            <p>Сканирование сети на предмет подключённых устройств. Показывает IP и MAC-адреса.</p>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2L2 12h5v10h10V12h5L12 2z"/></svg></div>
+          <div class="feature-body">
+            <h4>Beacon Spam <span class="feature-tag">тест</span></h4>
+            <p>Создание множества фейковых точек доступа. Только для тестирования собственных сетей.</p>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg></div>
+          <div class="feature-body">
+            <h4>Evil Portal <span class="feature-tag">обучение</span></h4>
+            <p>Создание фейковой страницы входа в Wi-Fi. Только для обучения и тестирования на своём оборудовании.</p>
+          </div>
+        </div>
+
+        <div class="callout warn">
+          <strong>Важно:</strong> работа с чужими Wi-Fi сетями без разрешения владельца запрещена законом. Все функции этого раздела предназначены для тестирования вашей собственной инфраструктуры.
+        </div>
+      </section>
+
+      <section id="ble">
+        <div class="section-head">
+          <div class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 7l5 5-5 5M17 7l-5 5 5 5"/></svg></div>
+          <div>
+            <h2>Bluetooth LE</h2>
+            <small>Bluetooth 5.0 · Low Energy</small>
+          </div>
+        </div>
+        <p class="section-desc">Работа с Bluetooth-устройствами вокруг: сканирование, эмуляция, спам-режимы.</p>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></div>
+          <div class="feature-body">
+            <h4>BLE Scan</h4>
+            <p>Поиск Bluetooth-устройств рядом. Показывает имя, MAC-адрес, уровень сигнала (RSSI).</p>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01"/></svg></div>
+          <div class="feature-body">
+            <h4>Bad BLE / BLE Keyboard</h4>
+            <p>Эмуляция Bluetooth-клавиатуры. Устройство подключается к телефону или компьютеру как клавиатура и выполняет Ducky-скрипты.</p>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2" width="10" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg></div>
+          <div class="feature-body">
+            <h4>iOS / Windows / Samsung / Android Spam</h4>
+            <p>Отправка множества запросов на сопряжение. На устройствах рядом появляются всплывающие уведомления. Только для тестирования своего оборудования.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="rf">
+        <div class="section-head">
+          <div class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12h16M4 12l4-4M4 12l4 4M20 12l-4-4M20 12l-4 4"/></svg></div>
+          <div>
+            <h2>RF / Sub-GHz</h2>
+            <small>Радиочастоты · CC1101</small>
+          </div>
+        </div>
+        <p class="section-desc">Работа с радиосигналами через модуль CC1101. Поддерживаемые частоты: 300–348, 387–464, 779–928 МГц.</p>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12h16M4 12l4-4M4 12l4 4"/></svg></div>
+          <div class="feature-body">
+            <h4>Scan / Copy</h4>
+            <p>Сканирование эфира и запись сигнала. Сохранение в файл .sub для последующего воспроизведения.</p>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/></svg></div>
+          <div class="feature-body">
+            <h4>Custom SubGhz</h4>
+            <p>Ручная настройка частоты, модуляции, скорости передачи. Работа с нестандартными сигналами.</p>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg></div>
+          <div class="feature-body">
+            <h4>TV-B-Gone</h4>
+            <p>Отправка ИК-кодов выключения для популярных моделей телевизоров. Только для собственных устройств.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="rfid">
+        <div class="section-head">
+          <div class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h10M7 12h10M7 17h6"/></svg></div>
+          <div>
+            <h2>RFID / NFC</h2>
+            <small>13,56 МГц · PN532</small>
+          </div>
+        </div>
+        <p class="section-desc">Работа с NFC-метками через модуль PN532. Частота 13,56 МГц, поддержка Mifare, FeliCa, ISO14443A/B.</p>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h4"/></svg></div>
+          <div class="feature-body">
+            <h4>Read Tag</h4>
+            <p>Чтение информации с NFC-метки: UID, тип карты, данные в секторах памяти.</p>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg></div>
+          <div class="feature-body">
+            <h4>Write Tag</h4>
+            <p>Запись данных на метку. Поддерживаются карты Mifare Classic и Ultralight.</p>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg></div>
+          <div class="feature-body">
+            <h4>Emulate Tag</h4>
+            <p>Эмуляция NFC-карты. Устройство притворяется меткой перед считывателем — для тестирования своих систем доступа.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="ir">
+        <div class="section-head">
+          <div class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></div>
+          <div>
+            <h2>Инфракрасный порт</h2>
+            <small>38 кГц приём · ~940 нм передача</small>
+          </div>
+        </div>
+        <p class="section-desc">Приём и передача инфракрасных сигналов. Работает как универсальный пульт для бытовой техники.</p>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M2 12h20"/></svg></div>
+          <div class="feature-body">
+            <h4>IR Read</h4>
+            <p>Приём сигнала от ИК-пульта. Сохранение в файл для последующей отправки.</p>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></div>
+          <div class="feature-body">
+            <h4>IR Send</h4>
+            <p>Отправка сохранённого ИК-сигнала. Управление телевизором, кондиционером, вентилятором.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="usb">
+        <div class="section-head">
+          <div class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h12"/></svg></div>
+          <div>
+            <h2>BadUSB / HID</h2>
+            <small>Эмуляция клавиатуры · только ESP32-S3</small>
+          </div>
+        </div>
+        <p class="section-desc">Эмуляция клавиатуры через USB или Bluetooth. Устройство подключается к телефону или компьютеру как обычная клавиатура и выполняет Ducky-скрипты.</p>
+
+        <div class="callout">
+          <strong>Доступно только на ESP32-S3.</strong> ESP32 (классический) не поддерживает USB-HID и Bluetooth-клавиатуру. Наш набор использует ESP32-S3.
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01"/></svg></div>
+          <div class="feature-body">
+            <h4>BadUSB</h4>
+            <p>Запуск Ducky-скриптов. Устройство подключается как USB-клавиатура и выполняет скрипт на целевом компьютере.</p>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h12M6 14h8"/></svg></div>
+          <div class="feature-body">
+            <h4>Keyboard Layout</h4>
+            <p>Выбор раскладки клавиатуры (RU, EN, DE и др.) и задержки между нажатиями клавиш.</p>
+          </div>
+        </div>
+
+        <div class="callout warn">
+          <strong>Важно:</strong> BadUSB предназначен для тестирования собственных систем безопасности. Использование на чужих устройствах без разрешения владельца запрещено законом.
+        </div>
+      </section>
+
+      <section id="js">
+        <div class="section-head">
+          <div class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+          <div>
+            <h2>JavaScript</h2>
+            <small>MicroQuickJS интерпретатор</small>
+          </div>
+        </div>
+        <p class="section-desc">Встроенный интерпретатор MicroQuickJS позволяет создавать собственные приложения прямо на устройстве. Не нужен компьютер — только дисплей, кнопки и код.</p>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <div class="feature-body">
+            <h4>Scripts</h4>
+            <p>Запуск скриптов из папки /BruceJS на SD-карте или внутренней памяти.</p>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg></div>
+          <div class="feature-body">
+            <h4>GPIO API</h4>
+            <p>Управление пинами: digitalWrite, analogWrite, pinMode. Прямой доступ к железу ESP32 из JS.</p>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12.55a11 11 0 0 1 14.08 0M8.53 16.11a6 6 0 0 1 6.95 0"/></svg></div>
+          <div class="feature-body">
+            <h4>WiFi / BLE API</h4>
+            <p>Работа с Wi-Fi и Bluetooth из скриптов. Создание собственных автоматизаций и приложений.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="webui">
+        <div class="section-head">
+          <div class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg></div>
+          <div>
+            <h2>WebUI</h2>
+            <small>Управление из браузера</small>
+          </div>
+        </div>
+        <p class="section-desc">Управление устройством через браузер. Подключитесь к ESP32 по Wi-Fi и откройте веб-интерфейс. Пароль по умолчанию: admin / bruce.</p>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+          <div class="feature-body">
+            <h4>WebUI</h4>
+            <p>Полноценный веб-интерфейс: запуск функций, настройки, мониторинг состояния устройства.</p>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
+          <div class="feature-body">
+            <h4>File Manager</h4>
+            <p>Загрузка и скачивание файлов на SD-карту или внутреннюю память LittleFS через браузер.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="settings">
+        <div class="section-head">
+          <div class="section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+          <div>
+            <h2>Настройки</h2>
+            <small>Персонализация устройства</small>
+          </div>
+        </div>
+        <p class="section-desc">Bruce позволяет полностью настроить устройство под себя: экран, звук, LED-индикация, поведение при загрузке.</p>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2"/></svg></div>
+          <div class="feature-body">
+            <h4>Display &amp; UI</h4>
+            <ul>
+              <li>Яркость экрана</li>
+              <li>Время до затемнения</li>
+              <li>Ориентация экрана</li>
+              <li>Цветовая схема и темы</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></div>
+          <div class="feature-body">
+            <h4>Audio</h4>
+            <p>Включение/выключение звука, регулировка громкости для Cardputer и аналогичных устройств со звуком.</p>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+          <div class="feature-body">
+            <h4>System</h4>
+            <ul>
+              <li>InstaBoot — быстрая загрузка</li>
+              <li>Выбор стартового приложения</li>
+              <li>Скрытие ненужных пунктов меню</li>
+              <li>Настройка времени и даты</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="16" height="10" rx="2"/><line x1="22" y1="11" x2="22" y2="13"/></svg></div>
+          <div class="feature-body">
+            <h4>Power</h4>
+            <p>Настройки питания, информация о батарее, режим сна. Для устройств с аккумулятором.</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-inner">
+      <div class="foot-links">
+        <a href="index.html">← Вернуться на главную</a>
+        <a href="instructions.html">Инструкция по сборке</a>
+        <a href="legal.html">Почему это законно</a>
+        <a href="https://github.com/pr3y/Bruce/wiki" target="_blank" rel="noopener noreferrer">Официальная документация Bruce</a>
+      </div>
+      <p>© 2026 DIY-Project. Независимый магазин. Bruce — открытый проект своих авторов, мы с ними не связаны.</p>
+      <p>Набор предназначен для обучения и проверки собственного оборудования.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  'use strict';
+  function $(id){return document.getElementById(id);}
+  var html=document.documentElement,btn=$('theme-btn'),meta=$('meta-theme');
+  function apply(mode){
+    html.setAttribute('data-theme',mode);
+    try{localStorage.setItem('diy_theme',mode);}catch(e){}
+    if(meta)meta.setAttribute('content',mode==='light'?'#f6f4ef':'#07090d');
+    var sun=btn&&btn.querySelector('.theme-sun'),rays=btn&&btn.querySelector('.theme-rays');
+    if(sun)sun.style.display=mode==='light'?'none':'';
+    if(rays)rays.style.display=mode==='light'?'none':'';
+  }
+  apply(html.getAttribute('data-theme')||'dark');
+  if(btn)btn.addEventListener('click',function(){apply(html.getAttribute('data-theme')==='light'?'dark':'light');});
+
+  /* Progress */
+  var prog=$('progress'),ticking=false;
+  function update(){
+    ticking=false;var h=document.documentElement;var max=h.scrollHeight-h.clientHeight;
+    if(prog)prog.style.transform='scaleX('+(max>0?Math.min(1,h.scrollTop/max):0)+')';
+  }
+  window.addEventListener('scroll',function(){if(!ticking){ticking=true;requestAnimationFrame(update);}},{passive:true});
+  update();
+
+  /* Активная ссылка в TOC */
+  (function tocActive(){
+    var links=document.querySelectorAll('#toc-list a');
+    var sections=document.querySelectorAll('.content > section');
+    if(!links.length||!('IntersectionObserver' in window))return;
+    var visibleIds=new Set();
+    function setActive(id){
+      Array.prototype.forEach.call(links,function(l){
+        var isActive=l.getAttribute('href')==='#'+id;
+        l.classList.toggle('is-active',isActive);
+        if(isActive)l.setAttribute('aria-current','true');else l.removeAttribute('aria-current');
+      });
+    }
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting)visibleIds.add(e.target.id);
+        else visibleIds.delete(e.target.id);
+      });
+      // Выбираем первую видимую секцию по порядку документа
+      var firstVisible=null;
+      Array.prototype.forEach.call(sections,function(s){
+        if(!firstVisible && visibleIds.has(s.id))firstVisible=s.id;
+      });
+      if(firstVisible)setActive(firstVisible);
+    },{rootMargin:'-30% 0px -55% 0px',threshold:0});
+    Array.prototype.forEach.call(sections,function(s){io.observe(s);});
+
+    // Плавный скролл по клику + снятие фокуса для мобильных
+    Array.prototype.forEach.call(links,function(l){
+      l.addEventListener('click',function(){
+        var id=l.getAttribute('href').slice(1);
+        setActive(id);
+        if(window.innerWidth<960)l.blur();
+      });
+    });
+  })();
+})();
+</script>
+</body>
+</html>

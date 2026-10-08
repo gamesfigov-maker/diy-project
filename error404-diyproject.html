@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07090d" id="meta-theme">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<title>404 — Страница не найдена · DIY-Project</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Unbounded:wght@600;700;800&display=swap">
+<script>try{var t=localStorage.getItem('diy_theme')||'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
+<style>
+:root{
+  --bg:#07090d;--bg-2:#0a0d13;--surface:#10161d;--surface-2:#151d26;--surface-3:#1a2430;
+  --line:#222e3b;--line-soft:#1a232e;
+  --fg:#e9f0f6;--muted:#8a9cae;--muted-2:#5f7183;
+  --accent:#ffb347;--accent-2:#ffd27a;--accent-ink:#1b1204;
+  --ok:#4fd1a1;--avito:#00aaff;
+  --font-display:'Unbounded',system-ui,sans-serif;
+  --font-body:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+[data-theme="light"]{
+  --bg:#f6f4ef;--bg-2:#fbfaf6;--surface:#fff;--surface-2:#f7f5ef;--surface-3:#ece7db;
+  --line:#ded7c8;--line-soft:#ebe6d9;
+  --fg:#141921;--muted:#5c6673;--muted-2:#8b95a0;
+  --accent:#c9761a;--accent-2:#e89b3a;--accent-ink:#fff;--ok:#0d8f66;--avito:#0088cc;
+  color-scheme:light;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:17px;line-height:1.65;display:grid;place-items:center;padding:24px;text-align:center;overflow-x:hidden;position:relative;min-height:100vh;min-height:100dvh;transition:background-color .3s,color .3s}
+body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;background:
+  radial-gradient(900px 500px at 50% -10%,rgba(255,179,71,.14),transparent 60%),
+  radial-gradient(700px 500px at 90% 100%,rgba(0,170,255,.08),transparent 60%),
+  radial-gradient(600px 400px at 10% 110%,rgba(79,209,161,.06),transparent 60%),
+  linear-gradient(180deg,var(--bg) 0%,var(--bg-2) 100%)}
+[data-theme="light"] body::before{opacity:.55}
+.wrap{max-width:600px;position:relative;z-index:1;width:100%}
+.crumbs{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:12px;color:var(--muted-2);letter-spacing:.06em;margin-bottom:8px}
+.crumbs a{color:var(--muted);text-decoration:none;transition:color .2s}
+.crumbs a:hover{color:var(--accent)}
+.crumbs svg{opacity:.5}
+.code{position:relative;font-family:var(--font-display);font-weight:800;font-size:clamp(96px,22vw,200px);line-height:.85;letter-spacing:-.06em;background:linear-gradient(100deg,var(--accent),var(--accent-2) 55%,var(--ok));background-clip:text;-webkit-background-clip:text;color:transparent;animation:glitch 5s ease-in-out infinite;margin-bottom:6px;user-select:none}
+.code::after{content:"404";position:absolute;inset:0;background:linear-gradient(100deg,var(--accent),var(--accent-2) 55%,var(--ok));background-clip:text;-webkit-background-clip:text;color:transparent;opacity:.35;animation:ghost 5s ease-in-out infinite;pointer-events:none}
+@keyframes glitch{0%,100%{transform:translateX(0)}18%{transform:translateX(-2px)}20%{transform:translateX(2px)}22%{transform:translateX(0)}62%{transform:translateX(1px)}64%{transform:translateX(-1px)}66%{transform:translateX(0)}}
+@keyframes ghost{0%,100%{transform:translate(0,0);opacity:.35}50%{transform:translate(3px,-2px);opacity:.15}}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(22px,3.6vw,34px);margin:14px 0 14px;letter-spacing:-.02em}
+p{color:var(--muted);font-size:16.5px;line-height:1.65;margin:0 0 28px;max-width:44ch;margin-inline:auto}
+.chip{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);padding:7px 15px;border:1px solid rgba(255,179,71,.4);border-radius:999px;background:rgba(255,179,71,.08);margin-bottom:22px}
+.chip::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:blink 2.2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 26px;font:600 15.5px/1 var(--font-body);border-radius:11px;border:1px solid var(--line);background:transparent;color:var(--fg);text-decoration:none;cursor:pointer;transition:border-color .2s,transform .2s,filter .2s}
+.btn:hover{border-color:var(--muted);transform:translateY(-2px)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));border-color:var(--accent);color:var(--accent-ink);box-shadow:0 12px 32px -14px rgba(255,179,71,.7)}
+.btn-primary:hover{filter:brightness(1.06)}
+.art{position:absolute;top:-30px;left:50%;transform:translateX(-50%);pointer-events:none;opacity:.16;z-index:-1;width:min(420px,90vw);height:auto}
+.circuit{stroke-dasharray:4 6;animation:dash 2.4s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-20}}
+.small{margin-top:36px;font-family:var(--font-mono);font-size:12px;color:var(--muted-2);letter-spacing:.06em}
+.small a{color:var(--muted);text-decoration:none;transition:color .2s}
+.small a:hover{color:var(--accent)}
+.theme-btn{position:fixed;top:20px;right:20px;z-index:10;width:42px;height:42px;padding:0;border:1px solid var(--line);border-radius:11px;background:var(--surface-2);color:var(--muted);cursor:pointer;display:grid;place-items:center;transition:border-color .2s,color .2s,transform .3s}
+.theme-btn:hover{border-color:var(--accent);color:var(--accent);transform:rotate(15deg)}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<button class="theme-btn" id="theme-btn" aria-label="Сменить тему">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4" class="theme-sun"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" class="theme-rays"/></svg>
+</button>
+
+<svg class="art" viewBox="0 0 360 260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="none" stroke="#ffb347" stroke-width="1.4">
+<path class="circuit" d="M 10 40 L 100 40 L 100 90 L 180 90"/>
+<path class="circuit" d="M 350 60 L 260 60 L 260 120 L 180 120" style="animation-delay:.6s"/>
+<path class="circuit" d="M 10 200 L 120 200 L 120 160 L 200 160" style="animation-delay:1.2s"/>
+<path class="circuit" d="M 350 220 L 240 220 L 240 180 L 200 180" style="animation-delay:1.8s"/>
+<circle cx="180" cy="130" r="30" stroke="#ffb347" stroke-width="1.6"/>
+<circle cx="180" cy="130" r="6" fill="#ffb347" stroke="none"/>
+</g></svg>
+
+<div class="wrap">
+  <div class="crumbs">
+    <a href="index.html">Главная</a>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+    <span>Ошибка 404</span>
+  </div>
+  <div class="chip">Страница не найдена</div>
+  <div class="code">404</div>
+  <h1>Такой страницы нет</h1>
+  <p>Похоже, вы попали не туда — страница удалена или её никогда не существовало. Но наш набор по-прежнему на месте.</p>
+  <div class="actions">
+    <a class="btn btn-primary" href="index.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      На главную
+    </a>
+    <button class="btn" type="button" id="back-btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Назад
+    </button>
+  </div>
+  <div class="small">DIY-Project · набор для сборки Bruce на ESP32-S3 · <a href="guide.html">руководство</a></div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var html=document.documentElement, btn=document.getElementById('theme-btn'), meta=document.getElementById('meta-theme');
+  function apply(mode){
+    html.setAttribute('data-theme',mode);
+    try{localStorage.setItem('diy_theme',mode);}catch(e){}
+    if(meta)meta.setAttribute('content',mode==='light'?'#f6f4ef':'#07090d');
+    var sun=btn&&btn.querySelector('.theme-sun'),rays=btn&&btn.querySelector('.theme-rays');
+    if(sun)sun.style.display=mode==='light'?'none':'';
+    if(rays)rays.style.display=mode==='light'?'none':'';
+  }
+  apply(html.getAttribute('data-theme')||'dark');
+  if(btn)btn.addEventListener('click',function(){apply(html.getAttribute('data-theme')==='light'?'dark':'light');});
+  var back=document.getElementById('back-btn');
+  if(back)back.addEventListener('click',function(){
+    if(history.length>1)history.back();else location.href='index.html';
+  });
+})();
+</script>
+</body>
+</html>
